@@ -28,7 +28,7 @@ ekranai ──HTTPS──► caddy ──► api ×N ──► core ──► l�
 - `api` kopijos kas 2 s gauna iš `core` naujus lėktuvus ir atsako ekranams iš savo atminties.
 - Todėl tiekėjo užklausų skaičius nepriklauso nei nuo ekranų, nei nuo `api` kopijų skaičiaus.
 
-**Ekranas** ([firmware](../SkyPanel/components/net/adsb_client.c)):
+**Ekranas** ([firmware](../AeroBox/components/net/adsb_client.c)):
 
 - Pirmą kartą užsiregistruoja (`POST /v1/register`) ir gauna raktą. Su juo siunčia visas tolesnes užklausas
   (`X-Device-Key`).
@@ -124,7 +124,7 @@ Atsakymas **503** reiškia „duomenų dabar nėra“: ekranas laikinai pereina 
 
 **Ekranų nukreipimas į serverį:**
 
-- Parduodamiems ekranams: [settings.h](../SkyPanel/components/sys/settings.h) faile `SKY_SERVER_URL` įrašykite
+- Parduodamiems ekranams: [settings.h](../AeroBox/components/sys/settings.h) faile `SKY_SERVER_URL` įrašykite
   `"https://api.jusu-domenas.com"` ir sukompiliuokite programą.
 - Jau veikiančiam ekranui: jo puslapyje System → Flight data → AeroBox server.
 

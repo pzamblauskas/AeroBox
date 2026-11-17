@@ -1,4 +1,4 @@
-# SkyPanel – programos įkėlimas (Uploadinimas)
+# AeroBox – programos įkėlimas (Uploadinimas)
 
 Programos versija: **0.12.3** · Plokštė: **ESP32-S3-N16R8** · Ekranas: 1× arba 4× P2.5 64×32 HUB75 (arba 1× 128×64)
 
@@ -9,7 +9,7 @@ Programos versija: **0.12.3** · Plokštė: **ESP32-S3-N16R8** · Ekranas: 1× a
 | `2_istrinti_viska_ir_ikelti.bat` | **Pirmam kartui ir kai „niekas neveikia“.** Ištrina visą atmintį ir įkelia programą. Wi-Fi ir nustatymai bus ištrinti. |
 | `1_ikelti.bat` | Įprastas atnaujinimas per USB. Wi-Fi ir nustatymai **išlieka**. |
 | `3_ziureti_zurnala.bat` | Rodo plokštės žurnalą (log). Naudokite, jei kažkas neveikia. |
-| `4_kompiliuoti_is_kodo_ir_ikelti.bat` | Sukompiliuoja iš `..\SkyPanel` kodo, įkelia ir atnaujina `bin\` failus. |
+| `4_kompiliuoti_is_kodo_ir_ikelti.bat` | Sukompiliuoja iš `..\AeroBox` kodo, įkelia ir atnaujina `bin\` failus. |
 | `bin\firmware_merged.bin` | Viskas viename faile, rašoma adresu **0x0** (naršyklės būdui ir gamybai). |
 | `bin\firmware.bin` | Tik programa. Skirta atnaujinti **per valdymo puslapį** (System → Firmware update). |
 | `bin\bootloader.bin`, `partitions.bin`, `ota_data_initial.bin` | Atskiros dalys (naudoja `1_ikelti.bat`). |
@@ -38,7 +38,7 @@ Jei rašo „Failed to connect“: laikykite **BOOT**, trumpai paspauskite **RST
 
 ## C būdas – per valdymo puslapį (be laido)
 
-Kai SkyPanel jau veikia: atidarykite **http://skypanel.local** (arba IP, rodomą ekrane po prisijungimo) →
+Kai AeroBox jau veikia: atidarykite **http://aerobox.local** (arba IP, rodomą ekrane po prisijungimo) →
 **System** → **Firmware update** → pasirinkite `bin\firmware.bin` → **Upload firmware**.
 Nustatymai išlieka. Jei nauja programa nepasileidžia, po perkrovimo grąžinama senoji (rollback).
 `firmware_merged.bin` čia netinka – puslapis jį atmes.
@@ -46,19 +46,19 @@ Nustatymai išlieka. Jei nauja programa nepasileidžia, po perkrovimo grąžinam
 ## D būdas – iš kodo (programuotojui)
 
 ```
-cd ..\SkyPanel
+cd ..\AeroBox
 uvx --from platformio pio run -e esp32-s3-n16r8 -t upload --upload-port COM8
 uvx --from platformio pio device monitor -p COM8 -b 115200
 ```
 
 ## Pirmas paleidimas (vartotojo valdymas, kaip TickerBox)
 
-1. Ekrane: (su 4 panelėmis – 4 s panelių numeriai, tik kol Wi-Fi nenustatytas), **SKYPANEL**, tada **WI-FI SETUP · JOIN WI-FI SkyPanel-XXXX**.
-2. Telefonu prisijunkite prie Wi-Fi tinklo **SkyPanel-XXXX** (be slaptažodžio).
+1. Ekrane: **AEROBOX**, tada **WI-FI SETUP · WI-FI NAME AeroBox, PASSWORD**.
+2. Telefonu prisijunkite prie Wi-Fi tinklo **AeroBox** (slaptažodis rodomas ekrane).
    Valdymo puslapis atsidaro pats. Jei neatsidaro, naršyklėje įveskite **http://192.168.4.1**.
 3. Skiltyje **Wi-Fi** pasirinkite namų tinklą (tik 2,4 GHz), įveskite slaptažodį → **Connect**.
-   SkyPanel pirma išbando ryšį; pavykus išsaugo ir persikrauna. Nepavykus parodo priežastį (blogas slaptažodis, tinklas nerastas…).
-4. Grįžkite į namų Wi-Fi ir atidarykite **http://skypanel.local** (Android, jei neveikia – IP iš ekrano).
+   AeroBox pirma išbando ryšį; pavykus išsaugo ir persikrauna. Nepavykus parodo priežastį (blogas slaptažodis, tinklas nerastas…).
+4. Grįžkite į namų Wi-Fi ir atidarykite **http://aerobox.local** (Android, jei neveikia – IP iš ekrano).
 
 Tas pats valdymo puslapis veikia abiem atvejais:
 
@@ -72,7 +72,7 @@ Tas pats valdymo puslapis veikia abiem atvejais:
   laiko juosta, programos atnaujinimas, perkrovimas, gamykliniai nustatymai, diagnostika.
 
 Mygtukas (GPIO 21): trumpai – režimas, 0,8 s – ryškumas, 5 s – pamiršti Wi-Fi.
-Laikant mygtuką įjungimo metu – atsidaro SkyPanel tinklas.
+Laikant mygtuką įjungimo metu – atsidaro AeroBox tinklas.
 
 ## 4 panelės (128×64): nustatymas
 
@@ -80,7 +80,7 @@ Laikant mygtuką įjungimo metu – atsidaro SkyPanel tinklas.
 2. **Show panel numbers**: kiekviena panelė rodo savo numerį (1 – arčiausiai ESP32) ir rodyklę **į viršų**.
    Jei rodyklė rodo žemyn arba numeriai ne savo vietose – rinkitės kitą išdėstymą arba „savas“
    (`stulpelis,eilutė,apversta;` kiekvienai panelei nuo ESP32, pvz. `1,0,1;1,1,0;0,1,0;0,0,1`).
-3. Išsaugojus išdėstymą SkyPanel persikrauna.
+3. Išsaugojus išdėstymą AeroBox persikrauna.
 4. **Colour test**: užrašas RED turi šviesti raudonai, GREEN – žaliai, BLUE – mėlynai.
    Jei žalia rodoma mėlynai (ir atvirkščiai) – **System → Colour order → R-B-G**. Pritaikoma iš karto.
    (Bandomajame stende 2026-10-23 taip ir buvo – nustatyta R-B-G.)
@@ -103,7 +103,7 @@ Pataisyta (v0.5):
 - Ekranas inicializuojamas **prieš** Wi-Fi; grandinės buferis, Wi-Fi ir TLS buferiai perkelti į PSRAM.
 - Jei ekranas vis tiek nepasileistų, valdymo puslapis tai parodo („Ekranas nepasileido“), o žurnale matyti, kiek atminties trūksta.
 - Srovės ribojimas pagal maitinimo bloką; paleidimo ekranas taupesnis.
-- **Saugus režimas**: jei SkyPanel 3 kartus iš eilės lūžta ar dingsta maitinimas, ryškumas apribojamas, įjungiamas SkyPanel tinklas, o puslapyje parodoma priežastis.
+- **Saugus režimas**: jei AeroBox 3 kartus iš eilės lūžta ar dingsta maitinimas, ryškumas apribojamas, įjungiamas AeroBox tinklas, o puslapyje parodoma priežastis.
 - Paleidimo priežastis (pvz. „maitinimo kritimas“) rodoma Sistema → Apie įrenginį.
 - adsb.lol maršrutų API dabar grąžina 201 – kodas tai priima. (Šiuo metu tas API grąžina tuščią atsakymą,
   todėl maršrutų stulpelis tuščias – tai tiekėjo pusėje.)
@@ -139,7 +139,7 @@ Peržiūra: `perziura\v0122_lektuvai_be_marsruto.png`.
 - **Maršruto linija eina per lėktuvą**: išvykimas → lėktuvas → paskirtis (ryškesnė nuskrista dalis). Anksčiau tai buvo
   tiesi (trumpiausia) linija tarp oro uostų, o tikri keliai prie Lietuvos dažnai lenkia uždarytą oro erdvę
   (Baltarusija, Rusija, Ukraina), todėl lėktuvas atrodydavo „nuklydęs“.
-- **Netinkami maršrutai nerodomi**: maršrutus SkyPanel gauna iš duomenų bazės pagal skrydžio numerį, ir kartais ji
+- **Netinkami maršrutai nerodomi**: maršrutus AeroBox gauna iš duomenų bazės pagal skrydžio numerį, ir kartais ji
   priskiria kito reiso maršrutą (pvz. THY1HB „IST > STR“, nors lėktuvas skrenda virš Lietuvos į šiaurę). Jei kelias per
   lėktuvą daug ilgesnis už tiesų (×1,3 + 200 km) arba toli nuo oro uostų lėktuvas skrenda tolyn nuo paskirties,
   maršrutas laikomas nežinomu: kortelėje „NO ROUTE DATA“, žemėlapyje nepiešiamas.
@@ -161,7 +161,7 @@ Peržiūros: `perziura\v0121_marsrutai_per_lektuva.png`, `perziura\v0121_no_rout
 - **Savo ekrano „Route map“ langas** šalia kortelės rodo jos lėktuvą, kitaip – sekamą skrydį, o jei nieko nesekate –
   artimų skrydžių maršrutus paeiliui, kaip naujas vaizdas.
 - **Savo ekrano pusėse nebegalima pasirinkti to paties lango**: kitos pusės pasirinkimas sąraše pilkas. Jei taip buvo
-  išsaugota anksčiau, SkyPanel pats pakeičia vieną pusę.
+  išsaugota anksčiau, AeroBox pats pakeičia vieną pusę.
 - *Test → Route map* rodo naują žemėlapį (su tikrais skrydžiais arba trimis pavyzdiniais per Europą).
 - **Ryškumo skalė**: puslapio 0 % dabar = buvę 50 % (žemiau jų LED'uose dingsta blankios spalvos ir glotnių
   raidžių kraštai), 100 % – kaip anksčiau. Ta pati skalė – nakties ryškumui ir mygtuko lygiams (0 / 25 / 50 / 75 /
@@ -258,7 +258,7 @@ virsta atitinkamais atstumo ir temperatūros vienetais.
   Peržiūra: `perziura\v010_spalvu_temos.png`.
 - Sekamo skrydžio laukimo užrašai siauruose ekranuose sutrumpinti („NOT TRACKING“), kad nebūtų nukirpti.
 - Peržiūra: `perziura\v010_vienetai_ir_laukai.png` (pėdos + jūrmylės + m/s, metrai + km/h, kortelė be dalies laukų).
-- Atsarginė kopija prieš šiuos pakeitimus: `..\SkyPanel_v0.9.1_atsargine` (senos v0.7 ir v0.8 kopijos – šiukšlinėje).
+- Atsarginė kopija prieš šiuos pakeitimus: `..\AeroBox_v0.9.1_atsargine` (senos v0.7 ir v0.8 kopijos – šiukšlinėje).
 
 ## Kas nauja v0.9.1
 
@@ -302,7 +302,7 @@ Versijos numeris pakeistas, kad būtų galima atskirti nuo jau įkeltos v0.9 (pa
 - **Naujas šriftas palyginimui**: Display → Font → *Smooth mono (JetBrains Mono)* – visos raidės vienodo pločio
   (skrydžio nr., laikrodis, tekstas). Smulkus tekstas: 7 taškų aukščio JetBrains Mono gautų tik 5 taškus raidei
   (M, N, W susilietų), todėl jis pieštas tikromis proporcijomis – 6 taškai raidei, kraštai ant taškų, nulis be taško viduje.
-  Licencija SIL OFL 1.1 – galima naudoti parduodamame produkte (tekstas `..\SkyPanel\components\gfx\ttf\OFL.txt`,
+  Licencija SIL OFL 1.1 – galima naudoti parduodamame produkte (tekstas `..\AeroBox\components\gfx\ttf\OFL.txt`,
   autoriai nurodyti puslapyje System → Fonts). Palyginimas: `perziura\v09_sriftai_smooth_mono.png`.
 - Peržiūra: `perziura\v09_ekranai.png`.
 
@@ -348,12 +348,12 @@ naudojimui. Parduodamam produktui reikės savo serverio ir komercinių šaltini�
 
 - **Duomenų šaltinis** (Sistema → Duomenys): numatytas **adsb.fi** – nemokamas, tik asmeniniam naudojimui ir bandymams, atnaujina kas 3 s (jų riba ~1 užklausa per sekundę). Galima pasirinkti ir adsb.lol.
 - **adsb.lol taisyklės**: adsb.lol leidžia 500 užklausų per parą vienam namų
-  tinklui (visiems įrenginiams kartu). SkyPanel turi paros „biudžetą“ – 450 užklausų (10 % atsargos) ir
+  tinklui (visiems įrenginiams kartu). AeroBox turi paros „biudžetą“ – 450 užklausų (10 % atsargos) ir
   leidžia jį ten, kur reikia: kai šalia lėktuvai – atnaujina **kas 15 s**, kol yra rezervo (iki 20 iš eilės),
   kai dangus tuščias – kas 5 min, naktinio režimo valandomis – kas 10 min. Rezervas prisipildo po 1 kas ~3 min
   ir išlieka perkrovus. Tarp atnaujinimų lėktuvai **juda tolygiai** pagal greitį ir kursą (iki 3 min).
   - Sistema → Duomenys: „Pagal adsb.lol taisykles“ arba, tik bandymams, kas 5 / 10 / 15 s (viršija paros ribą).
-  - Jei adsb.lol vis tiek riboja (429) – SkyPanel laukia, kiek prašo serveris; ekrane „RIBOJA ADSB.LOL“,
+  - Jei adsb.lol vis tiek riboja (429) – AeroBox laukia, kiek prašo serveris; ekrane „RIBOJA ADSB.LOL“,
     puslapyje „Riboja adsb.lol, dar X s“. Sistema → Apie įrenginį: rezervas ir kada kita užklausa.
   - Maršrutų paieška (adsb.lol ją šiuo metu grąžina tuščią) šiame režime išjungta – ji irgi skaičiuotųsi į ribą.
 - **Radaro animacijos** (Ekranas → Radaro animacija): *Pėdsakai* (ramus, be spindulio), *Sonaras*
@@ -380,7 +380,7 @@ naudojimui. Parduodamam produktui reikės savo serverio ir komercinių šaltini�
 
 1. Paleiskite `3_ziureti_zurnala.bat`, paspauskite **RST** ir atsiųskite pirmas ~40 eilučių.
 2. Ieškokite eilučių: `paleidimas: …` (priežastis), `hub75: …`, `ekranas …`, klaidų `E (…)`.
-3. Vaizdas pasislinkęs ar mirga – žr. `..\SkyPanel\README.md` skyrių „Jei vaizdas netinkamas“.
+3. Vaizdas pasislinkęs ar mirga – žr. `..\AeroBox\README.md` skyrių „Jei vaizdas netinkamas“.
 
 ## Atminties žemėlapis (16 MB)
 

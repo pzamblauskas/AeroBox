@@ -1,6 +1,6 @@
-/* Nustatymų nuskaitymas, tikrinimas ir išsaugojimas NVS.
- * NVS sritis vadinasi „skypanel“ (senas projekto vardas): ji nekeičiama, kad atnaujinus programą
- * išliktų jau išsaugoti nustatymai. NVS raktai trumpi, nes NVS raktas gali būti ne ilgesnis nei 15 simbolių. */
+/* Nustatymų nuskaitymas, tikrinimas ir išsaugojimas NVS (sritis „aerobox“).
+ * Iki 1.2.4 versijos nustatymai buvo srityje „skypanel“; pirmą kartą paleidus naują programą jie perkeliami
+ * (migrate_old_namespace). NVS raktai trumpi, nes NVS raktas gali būti ne ilgesnis nei 15 simbolių. */
 #include "settings.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -13,9 +13,76 @@
 #include <string.h>
 
 static const char *TAG = "settings";
-#define NVS_NS "skypanel"
+#define NVS_NS     "aerobox"
+#define NVS_NS_OLD "skypanel"     /* iki 1.2.4 */
 
 settings_t g_settings;
+
+/* Senos versijos nustatymai (sritis NVS_NS_OLD) nukopijuojami į NVS_NS, o senoji sritis ištrinama.
+ * Jei perkėlimas nutrūktų (dingtų maitinimas), kitą kartą jis pakartojamas iš naujo – kopijavimas
+ * perrašo tas pačias reikšmes. Naujame įrenginyje senos srities nėra, todėl nieko nedaroma. */
+static void migrate_old_namespace(void)
+{
+    nvs_iterator_t it = NULL;
+    esp_err_t e = nvs_entry_find(NVS_DEFAULT_PART_NAME, NVS_NS_OLD, NVS_TYPE_ANY, &it);
+    if (e != ESP_OK) return;                       /* senoje srityje įrašų nėra – perkelti nieko */
+    nvs_handle_t src, dst;
+    if (nvs_open(NVS_NS_OLD, NVS_READWRITE, &src) != ESP_OK) {
+        nvs_release_iterator(it);
+        return;
+    }
+    if (nvs_open(NVS_NS, NVS_READWRITE, &dst) != ESP_OK) {
+        nvs_release_iterator(it);
+        nvs_close(src);
+        return;
+    }
+    int copied = 0;
+    while (e == ESP_OK) {
+        nvs_entry_info_t info;
+        nvs_entry_info(it, &info);
+        switch (info.type) {
+        case NVS_TYPE_U8: {
+            uint8_t v;
+            if (nvs_get_u8(src, info.key, &v) == ESP_OK && nvs_set_u8(dst, info.key, v) == ESP_OK) copied++;
+            break;
+        }
+        case NVS_TYPE_U16: {
+            uint16_t v;
+            if (nvs_get_u16(src, info.key, &v) == ESP_OK && nvs_set_u16(dst, info.key, v) == ESP_OK) copied++;
+            break;
+        }
+        case NVS_TYPE_U32: {
+            uint32_t v;
+            if (nvs_get_u32(src, info.key, &v) == ESP_OK && nvs_set_u32(dst, info.key, v) == ESP_OK) copied++;
+            break;
+        }
+        case NVS_TYPE_STR:
+        case NVS_TYPE_BLOB: {
+            const bool str = info.type == NVS_TYPE_STR;
+            size_t n = 0;
+            if ((str ? nvs_get_str(src, info.key, NULL, &n) : nvs_get_blob(src, info.key, NULL, &n)) != ESP_OK) break;
+            void *buf = malloc(n ? n : 1);
+            if (!buf) break;
+            if (str ? nvs_get_str(src, info.key, buf, &n) == ESP_OK && nvs_set_str(dst, info.key, buf) == ESP_OK
+                    : nvs_get_blob(src, info.key, buf, &n) == ESP_OK && nvs_set_blob(dst, info.key, buf, n) == ESP_OK)
+                copied++;
+            free(buf);
+            break;
+        }
+        default:                                   /* kitokių tipų programa nenaudoja */
+            break;
+        }
+        e = nvs_entry_next(&it);
+    }
+    nvs_release_iterator(it);
+    if (nvs_commit(dst) == ESP_OK) {               /* senoji sritis trinama tik tada, kai naujoji įrašyta */
+        nvs_erase_all(src);
+        nvs_commit(src);
+        ESP_LOGW(TAG, "nustatymai perkelti is NVS srities '%s' i '%s' (%d irasu)", NVS_NS_OLD, NVS_NS, copied);
+    }
+    nvs_close(dst);
+    nvs_close(src);
+}
 
 static void get_float(nvs_handle_t h, const char *key, float *out)
 {
@@ -51,6 +118,7 @@ esp_err_t settings_init(void)
         err = nvs_flash_init();
     }
     if (err != ESP_OK) return err;
+    migrate_old_namespace();
 
     g_settings.home_lat     = strtof(CONFIG_SKY_HOME_LAT, NULL);
     g_settings.home_lon     = strtof(CONFIG_SKY_HOME_LON, NULL);

@@ -1,8 +1,8 @@
 @echo off
-rem SkyPanel: plokstes zurnalas (log) - ka ji daro paleidimo metu. Iseiti: Ctrl+C.
+rem AeroBox: plokstes zurnalas (log) - ka ji daro paleidimo metu. Iseiti: Ctrl+C.
 cd /d "%~dp0"
 echo ==============================================
-echo   SkyPanel - zurnalas (diagnostikai)
+echo   AeroBox - zurnalas (diagnostikai)
 echo ==============================================
 where uvx >nul 2>nul
 if errorlevel 1 (

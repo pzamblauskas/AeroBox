@@ -1,8 +1,8 @@
 @echo off
-rem SkyPanel: programos ikelimas per USB. Nustatymai (Wi-Fi, vieta) islieka.
+rem AeroBox: programos ikelimas per USB. Nustatymai (Wi-Fi, vieta) islieka.
 cd /d "%~dp0"
 echo ==============================================
-echo   SkyPanel - programos ikelimas per USB
+echo   AeroBox - programos ikelimas per USB
 echo ==============================================
 call "%~dp0_esptool.bat" || exit /b 1
 

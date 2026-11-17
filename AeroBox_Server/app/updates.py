@@ -52,7 +52,7 @@ def parse_app(data: bytes) -> dict:
         raise HTTPException(400, "Not an ESP32 app file. Use firmware.bin (not firmware_merged.bin).")
     if struct.unpack_from("<I", data, 32)[0] != 0xABCD5432:   # esp_app_desc_t magic
         raise HTTPException(400, "App description not found. Use firmware.bin.")
-    m = re.search(rb"(?:AeroBox|SkyPanel)/([0-9][0-9A-Za-z.\-_]{0,22}) \(ESP32-S3\)", data)
+    m = re.search(rb"AeroBox/([0-9][0-9A-Za-z.\-_]{0,22}) \(ESP32-S3\)", data)
     if not m:
         raise HTTPException(400, "Firmware version not found in the file.")
     cstr = lambda off, n: data[off:off + n].split(b"\0", 1)[0].decode("ascii", "replace")

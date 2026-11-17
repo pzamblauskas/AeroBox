@@ -306,7 +306,7 @@ def emit(fonts, path):
 def preview(fonts, path):
     """LED dot preview of each font (8 px per LED) - for checking by eye."""
     p = 8
-    text = "SKYPANEL RYR1234 VNO>DUB FL370 12:45 13" + DEG + "C"
+    text = "AEROBOX RYR1234 VNO>DUB FL370 12:45 13" + DEG + "C"
     rows = []
     for f in fonts:
         h = f["top"] + f["cap"] + f["bottom"]

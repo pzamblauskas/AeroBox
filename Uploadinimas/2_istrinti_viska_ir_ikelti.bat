@@ -1,9 +1,9 @@
 @echo off
-rem SkyPanel: visiskas isvalymas + ikelimas. Istrina ir Wi-Fi bei visus nustatymus.
+rem AeroBox: visiskas isvalymas + ikelimas. Istrina ir Wi-Fi bei visus nustatymus.
 rem Naudoti pirma karta ir kai plokste "nieko nedaro" po ankstesnio ikelimo.
 cd /d "%~dp0"
 echo ==============================================
-echo   SkyPanel - VISKA ISTRINTI ir ikelti is naujo
+echo   AeroBox - VISKA ISTRINTI ir ikelti is naujo
 echo ==============================================
 echo Bus istrinta visa atmintis (Wi-Fi, vieta, nustatymai).
 call "%~dp0_esptool.bat" || exit /b 1
@@ -19,9 +19,9 @@ echo 2/2 Keliama bin\firmware_merged.bin ...
 if errorlevel 1 goto fail
 
 echo.
-echo [OK] Ikelta. Ekrane turi pasirodyti SKYPANEL, paskui "WIFI NUSTATYMAS".
+echo [OK] Ikelta. Ekrane turi pasirodyti AEROBOX, paskui "WI-FI SETUP".
 echo Jei ekranas tuscias per 5 s - paspauskite plokstes RST mygtuka.
-echo Telefonu prisijunkite prie Wi-Fi tinklo SkyPanel-XXXX - nustatymu puslapis atsidarys pats.
+echo Telefonu prisijunkite prie Wi-Fi tinklo AeroBox (slaptazodis rodomas ekrane) - puslapis atsidarys pats.
 pause
 exit /b 0
 

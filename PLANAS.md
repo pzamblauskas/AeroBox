@@ -13,8 +13,8 @@ Data: 2026-11-10. Programa 1.2.0, serveris 1.0.
 - Pavadinimas kode yra vienoje vietoje kiekviename projekte, todėl prireikus pakeisti nesudėtinga.
 
 Pakeista: ekrano užrašai, valdymo puslapis, tinklo vardas `AeroBox`, adresas `aerobox.local`, serveris.
-Palikta tyčia: aplankų vardai ir vidinis projekto vardas (kad senesnė programa priimtų atnaujinimą ir
-išliktų nustatymai).
+2026-11-17 pakeisti ir aplankų vardai bei vidinis projekto vardas (`aerobox`). Ekraną su senesne nei 1.2.4
+programa vieną kartą reikia atnaujinti laidu; nustatymai perkeliami automatiškai.
 
 ## 2. Konkurentai (ką radau)
 
@@ -54,7 +54,7 @@ nustatymas be perkrovimo.
 - savas nustatymų tinklo slaptažodis kiekvienam ekranui;
 - ekranas registruodamasis siunčia savo numerį.
 
-**Serveris 1.0** (`SkyPanel_Server`):
+**Serveris 1.0** (`AeroBox_Server`):
 - trys režimai: vienas procesas bandymams; `core` + kiek reikia `api` kopijų gamybai;
 - saugumo ribos (žr. `SAUGUMAS.md`), ekranų valdymas `/admin` puslapyje (paieška, blokavimas, leidžiamų sąrašas);
 - licencijuoto tiekėjo jungtis, nustatoma per `.env`;
@@ -104,10 +104,9 @@ tiekėjas (~1 užklausa/s, t. y. ~40 skirtingų miestų); su licencijuotu tiekė
 | Kas | Kur |
 |---|---|
 | Programa ekranui | `Uploadinimas\bin\firmware.bin` |
-| Serveris (kelti į hostingą) | `SkyPanel_Server\` |
-| Diegimo instrukcija | `SkyPanel_Server\DIEGIMAS.md` |
-| Saugumo aprašas | `SkyPanel_Server\SAUGUMAS.md` |
-| Serverio testai | `SkyPanel_Server\tests\test_server.py` |
+| Serveris (kelti į hostingą) | `AeroBox_Server\` |
+| Diegimo ir saugumo instrukcija | `AeroBox_Server\README.md` |
+| Serverio testai | `AeroBox_Server\tests\test_server.py` |
 
 Šaltiniai: ARRI SkyPanel ženklas (arri.com), AEROBOX ženklų įrašai (trademark.justia.com, markinton.com),
 FlightWall (theflightwall.com), ES Kibernetinio atsparumo aktas (skadden.com, hoganlovells.com, ncsc.gov.ie).

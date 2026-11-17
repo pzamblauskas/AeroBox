@@ -1,8 +1,8 @@
 @echo off
-rem SkyPanel: sukompiliuoti is ..\SkyPanel kodo, ikelti ir atnaujinti bin\ failus.
+rem AeroBox: sukompiliuoti is ..\AeroBox kodo, ikelti ir atnaujinti bin\ failus.
 cd /d "%~dp0"
 echo ==============================================
-echo   SkyPanel - kompiliuoti is kodo ir ikelti
+echo   AeroBox - kompiliuoti is kodo ir ikelti
 echo ==============================================
 where uvx >nul 2>nul
 if errorlevel 1 (
@@ -12,7 +12,7 @@ if errorlevel 1 (
 )
 call "%~dp0_esptool.bat" || exit /b 1
 
-pushd "%~dp0..\SkyPanel"
+pushd "%~dp0..\AeroBox"
 uvx --from platformio pio run -e esp32-s3-n16r8 -t upload --upload-port %PORT%
 if errorlevel 1 (
     popd
@@ -22,7 +22,7 @@ if errorlevel 1 (
 )
 popd
 
-set "B=%~dp0..\SkyPanel\.pio\build\esp32-s3-n16r8"
+set "B=%~dp0..\AeroBox\.pio\build\esp32-s3-n16r8"
 copy /y "%B%\bootloader.bin" bin\ >nul
 copy /y "%B%\partitions.bin" bin\ >nul
 copy /y "%B%\ota_data_initial.bin" bin\ >nul

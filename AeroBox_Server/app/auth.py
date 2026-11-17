@@ -20,7 +20,7 @@ log = logging.getLogger("aerobox.auth")
 _lock = threading.Lock()
 _buckets: dict[str, tuple[float, float]] = {}   # ekrano ID → (likęs užklausų kiekis, kada skaičiuota)
 _bad_admin: dict[str, list[float]] = {}          # IP → klaidingų administratoriaus bandymų laikai
-_UA_VERSION = re.compile(r"(?:AeroBox|SkyPanel)/([0-9A-Za-z.\-_]{1,24})")   # programos versija iš User-Agent
+_UA_VERSION = re.compile(r"AeroBox/([0-9A-Za-z.\-_]{1,24})")   # programos versija iš User-Agent
 
 
 def client_ip(req: Request) -> str:

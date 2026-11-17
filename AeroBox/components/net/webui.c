@@ -176,9 +176,7 @@ static bool is_own_name(const char *v)
 static bool post_allowed(httpd_req_t *req)
 {
     char v[64];
-    /* X-SkyPanel – senasis pavadinimas: veikia ir puslapis, atidarytas prieš atnaujinimą (ar iš senesnės versijos) */
-    if ((httpd_req_get_hdr_value_str(req, "X-AeroBox", v, sizeof v) != ESP_OK || strcmp(v, "1") != 0) &&
-        (httpd_req_get_hdr_value_str(req, "X-SkyPanel", v, sizeof v) != ESP_OK || strcmp(v, "1") != 0))
+    if (httpd_req_get_hdr_value_str(req, "X-AeroBox", v, sizeof v) != ESP_OK || strcmp(v, "1") != 0)
         return false;
     if (httpd_req_get_hdr_value_str(req, "Host", v, sizeof v) != ESP_OK) return false;
     char *end = v[0] == '[' ? strchr(v, ']') : strchr(v, ':');      /* be prievado; [IPv6] – paliekama kaip yra */

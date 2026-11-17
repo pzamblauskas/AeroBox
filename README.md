@@ -12,10 +12,7 @@ Ekrano programa parašyta C kalba (ESP-IDF 5.5) ir kompiliuojama per PlatformIO;
 
 ## Kaip sukurtas šis projektas
 
-Didžiąją dalį kodo ir dokumentacijos parašė dirbtinio intelekto asistentas (Claude, Anthropic), vykdydamas
-projekto savininko užduotis. Savininkas nustatė, ką produktas turi daryti, išbandė programą tikrame įrenginyje
-ir priėmė sprendimus. Nepriklausomas specialistas kodo dar neperžiūrėjo, todėl tokia peržiūra – ypač saugumo
-ir serverio dalies – yra laukiama ir reikalinga.
+Prasidėjo viskas vibecodinimu, nes negalvojau, kad kažkas pavyks, o dabar jau priėjom prie to, kad per mažai žinių turiu, jog ištobulinti iki galutinio, parduodamo varianto ^^
 
 ## Kompiliavimas
 

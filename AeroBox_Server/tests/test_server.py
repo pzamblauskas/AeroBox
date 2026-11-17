@@ -124,7 +124,7 @@ with TestClient(main.app) as c:
     fw = bytearray(4096)
     fw[0] = 0xE9
     fw[32:36] = (0xABCD5432).to_bytes(4, "little")
-    fw[32 + 48:32 + 55] = b"skypanel"[:7]
+    fw[32 + 48:32 + 55] = b"aerobox"
     fw[600:600 + 24] = b"AeroBox/9.9.9 (ESP32-S3)"
     fw = bytes(fw)
     ok(c.post("/v1/admin/firmware", content=fw).status_code == 404, "programos ikelimas be rakto - 404")
