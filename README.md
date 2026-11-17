@@ -5,8 +5,8 @@ Ekrano programa parašyta C kalba (ESP-IDF 5.5) ir kompiliuojama per PlatformIO;
 
 | Aplankas | Kas tai |
 |---|---|
-| [SkyPanel](SkyPanel) | **AeroBox** ekrano programa (vidinis projekto vardas – `skypanel`) |
-| [SkyPanel_Server](SkyPanel_Server) | AeroBox serveris: lėktuvų duomenys, registracija, atnaujinimai ([instrukcija](SkyPanel_Server/README.md)) |
+| [AeroBox](AeroBox) | Ekrano programa |
+| [AeroBox_Server](AeroBox_Server) | Serveris: lėktuvų duomenys, registracija, atnaujinimai ([instrukcija](AeroBox_Server/README.md)) |
 | [Uploadinimas](Uploadinimas) | Programos įkėlimas į ekraną laidu ([instrukcija](Uploadinimas/README.md)) |
 | [PLANAS.md](PLANAS.md) | Tyrimas, rastos klaidos ir kas liko iki pardavimų |
 
@@ -21,7 +21,7 @@ todėl aplankas prijungiamas kaip diskas:
 
 ```bash
 subst S: "C:\kelias\iki\sio\aplanko"
-cd /d S:\SkyPanel
+cd /d S:\AeroBox
 uvx --from platformio pio run -e esp32-s3-n16r8
 ```
 
