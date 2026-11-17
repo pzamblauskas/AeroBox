@@ -1,0 +1,6 @@
+# Visi tekstiniai failai saugomi ir laikomi su LF eilučių pabaigomis (shell skriptai turi veikti Linux serveryje)
+* text=auto eol=lf
+*.bat text eol=crlf
+*.bin binary
+*.png binary
+*.ttf binary

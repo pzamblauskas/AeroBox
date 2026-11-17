@@ -1,0 +1,6 @@
+# Slaptazodziai ir serverio duomenys - niekada i git
+.env
+backups/
+geoip/
+.venv/
+__pycache__/

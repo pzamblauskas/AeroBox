@@ -1,0 +1,54 @@
+# Caddy – vienintelės serverio durys į internetą. HTTPS sertifikatą jis gauna ir atnaujina pats (Let's Encrypt).
+# DOMAIN ir ACME_EMAIL imami iš .env.
+{
+	email {$ACME_EMAIL}
+	servers {
+		timeouts {
+			read_header 10s
+			idle 2m
+		}
+		max_header_size 16KB
+	}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Didžiausia užklausa – programos failas (iki 4 MB); visos kitos daug mažesnės
+	request_body {
+		max_size 5MB
+	}
+
+	# Vidiniai adresai (api ↔ core) iš interneto nepasiekiami
+	@internal path /internal /internal/*
+	respond @internal 404
+
+	reverse_proxy {
+		# Visos api kopijos (API_REPLICAS) randamos per vidinį Docker DNS
+		dynamic a {
+			name api
+			port 8080
+			refresh 5s
+		}
+		# Tas pats ekranas visada patenka į tą pačią kopiją, todėl jo užklausų riba skaičiuojama vienoje vietoje
+		lb_policy header X-Device-Key
+		lb_try_duration 3s
+		fail_duration 10s
+		max_fails 2
+		transport http {
+			dial_timeout 2s
+			response_header_timeout 20s
+		}
+	}
+
+	log {
+		output stdout
+		format console
+		level WARN
+	}
+}

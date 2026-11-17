@@ -1,0 +1,49 @@
+# --- AeroBox: ESP32-S3-N16R8 (16 MB quad flash, 8 MB octal PSRAM) ---
+CONFIG_IDF_TARGET="esp32s3"
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+CONFIG_FREERTOS_HZ=1000
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# Flash atmintis: 16 MB
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+
+# PSRAM: 8 MB, octal režimas
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+# Wi-Fi, lwIP ir TLS buferiai – PSRAM atmintyje; vidinė RAM paliekama HUB75 DMA buferiams (2 × 48 KB)
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
+
+# Skirsniai: nvs, otadata, ota_0, ota_1, storage (partitions.csv)
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# Jei po atnaujinimo nauja programa neveikia (persikrauna per pirmąsias 20 s), grąžinama senoji
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# Atnaujinimai be parašų: naudotojai firmware.bin įkelia patys
+# CONFIG_SECURE_SIGNED_APPS_NO_SECURE_BOOT is not set
+
+# Maitinimo kritimo detektorius: kai 4 panelės maitinamos iš silpno bloko, žurnale matoma aiški priežastis
+CONFIG_ESP_BROWNOUT_DET=y
+CONFIG_ESP_BROWNOUT_DET_LVL_SEL_7=y
+
+# Valdymo puslapio serveris: ilgesnės antraštės (jas siunčia telefonų naršyklės)
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+
+# TLS (https://api.adsb.lol)
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
+
+# --- Numatytieji naudotojo nustatymai (juos galima keisti ir per menuconfig → AeroBox) ---
+CONFIG_SKY_WIFI_SSID=""
+CONFIG_SKY_WIFI_PASS=""
+CONFIG_SKY_HOME_LAT="54.6900"
+CONFIG_SKY_HOME_LON="25.2800"
+CONFIG_SKY_RANGE_KM=20
+
+# Galutinė versija kompiliuojama su -O2
+CONFIG_COMPILER_OPTIMIZATION_PERF=y

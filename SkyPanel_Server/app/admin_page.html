@@ -1,0 +1,178 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>AeroBox server</title>
+<style>
+:root{--bg:#f7f4ea;--card:#fffdf6;--fg:#1f1b10;--mut:#6f6650;--line:#e4dcc4;--acc:#b98600;--ok:#2f7d1e;--warn:#9a6700;--bad:#c62f22;--soft:#f0ead8}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0a07;--card:#15130c;--fg:#f3ead2;--mut:#a89c7a;--line:#383120;--acc:#f5b60a;--ok:#86c94a;--warn:#ffb300;--bad:#ff5b4a;--soft:#201c10}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:22px;margin:0}
+h2{font-size:16px;margin:26px 0 8px}
+.pill{padding:4px 10px;border-radius:99px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card)}
+.pill.ok{color:var(--ok);border-color:var(--ok)}.pill.warn{color:var(--warn);border-color:var(--warn)}.pill.bad{color:var(--bad);border-color:var(--bad)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.t{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.t span{display:block;color:var(--mut);font-size:13px}.t b{display:block;font-size:22px;margin-top:2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.t small{color:var(--mut);font-size:12.5px;display:block;margin-top:2px;overflow-wrap:anywhere}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.mut{color:var(--mut)}
+label{display:block;font-weight:600;margin:10px 0 4px}input[type=text],input[type=password],select{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+button{margin-top:12px;padding:8px 16px;border:0;border-radius:6px;background:var(--acc);color:#141003;font-weight:600;cursor:pointer;font:inherit}
+button.del{background:none;color:var(--bad);padding:0;margin:0}
+small{color:var(--mut)}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+.wrap{overflow-x:auto}.msg{margin-top:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.row>*{flex:1 1 160px}.row .chk{flex:0 0 auto;display:flex;gap:6px;align-items:center;font-weight:400;margin:0 0 8px}
+#logs{font:12.5px/1.5 ui-monospace,Consolas,monospace;max-height:520px;overflow:auto;background:var(--soft);border-radius:8px;padding:8px 10px;margin-top:10px}
+#logs div{white-space:pre-wrap;overflow-wrap:anywhere;border-bottom:1px solid var(--line);padding:2px 0}
+#logs .l-WARNING{color:var(--warn)}#logs .l-ERROR,#logs .l-CRITICAL{color:var(--bad)}
+.bars div{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:14px}.bars i{display:block;height:8px;border-radius:99px;background:var(--acc);min-width:2px}
+details summary{cursor:pointer;color:var(--mut)}
+</style></head><body><main>
+<header><h1>AeroBox server</h1><span class="pill" id="pill">…</span><small id="upd"></small></header>
+
+<details class="card" id="tokbox" style="margin-top:14px"><summary>Admin token</summary>
+<label for="tok">Admin token</label><input type="password" id="tok" autocomplete="off"><small>Saved in this browser only.</small></details>
+
+<h2>Health</h2>
+<div class="grid">
+<div class="t"><span>Flight data source</span><b id="h_src">–</b><small id="h_src2"></small></div>
+<div class="t"><span>Displays online now</span><b id="h_on">–</b><small id="h_on2"></small></div>
+<div class="t"><span>Requests from displays</span><b id="h_rpm">–</b><small id="h_rpm2"></small></div>
+<div class="t"><span>Server response time</span><b id="h_ms">–</b><small id="h_ms2"></small></div>
+<div class="t"><span>Errors (last minute)</span><b id="h_err">–</b><small id="h_err2"></small></div>
+<div class="t"><span>Rejected requests (since start)</span><b id="h_rej">–</b><small id="h_rej2"></small></div>
+<div class="t"><span>Warnings / errors in log (1 h)</span><b id="h_log">–</b><small><a href="#lg" onclick="$('lv').value='WARNING';relog()">Show them</a></small></div>
+</div>
+
+<h2>Flight data</h2>
+<div class="grid">
+<div class="t"><span>Calls to the data provider</span><b id="f_up">–</b><small id="f_up2"></small></div>
+<div class="t"><span>Areas being updated</span><b id="f_z">–</b><small id="f_z2"></small></div>
+<div class="t"><span>Aircraft in memory</span><b id="f_ac">–</b><small id="f_ac2"></small></div>
+<div class="t"><span>Last failure</span><b id="f_fail">–</b><small id="f_fail2"></small></div>
+<div class="t"><span>Other sources (since start)</span><b id="f_oth">–</b><small id="f_oth2"></small></div>
+</div>
+
+<h2>Server</h2>
+<div class="grid">
+<div class="t"><span>Running for</span><b id="s_up">–</b><small id="s_up2"></small></div>
+<div class="t"><span>Processes</span><b id="s_pr">–</b><small id="s_pr2"></small></div>
+<div class="t"><span>Server memory</span><b id="s_mem">–</b><small id="s_mem2"></small></div>
+<div class="t"><span>CPU</span><b id="s_cpu">–</b><small id="s_cpu2"></small></div>
+<div class="t"><span>Database</span><b id="s_db">–</b><small id="s_db2"></small></div>
+<div class="t"><span>Responses since start</span><b id="s_resp">–</b><small id="s_resp2"></small></div>
+</div>
+
+<h2>Displays</h2>
+<div class="card"><div id="dev" class="mut">–</div><div class="bars" id="fwbars"></div></div>
+
+<h2>Manage displays</h2>
+<div class="card">
+<div class="row"><div><label for="dq">Find a display (ID or device number)</label><input type="text" id="dq" placeholder="ab_… or aabbccddeeff" oninput="loadDev()"></div></div>
+<div class="wrap"><table id="dtab"><tr><td class="mut">–</td></tr></table></div>
+</div>
+
+<h2>Upload firmware</h2>
+<div class="card"><label for="f">firmware.bin</label><input type="file" id="f" accept=".bin">
+<small>The version is read from the file itself. Use firmware.bin, not firmware_merged.bin. Displays check every 6 hours and soon after they start;
+owners see “New firmware is available” at the top of the AeroBox page and install it with one click.</small>
+<label for="n">What's new (shown to owners, optional)</label><input type="text" id="n" maxlength="200">
+<button onclick="up()">Upload</button><div class="msg" id="m"></div></div>
+
+<h2>Versions</h2><div class="card wrap"><table id="rel"><tr><td class="mut">Enter the token to load.</td></tr></table></div>
+
+<h2 id="lg">Log</h2>
+<div class="card">
+<div class="row">
+<div><label for="lv">Show</label><select id="lv" onchange="relog()"><option value="INFO">Everything</option><option value="WARNING">Warnings and errors</option><option value="ERROR">Errors only</option></select></div>
+<div><label for="q">Search</label><input type="text" id="q" oninput="drawLogs()" placeholder="e.g. sp_, zona, 503"></div>
+<label class="chk"><input type="checkbox" id="pause"> Pause</label>
+</div>
+<div id="logs" aria-live="off"></div>
+<small>Newest at the top. The server keeps the last 1500 lines in memory (they are cleared when it restarts).</small>
+</div>
+</main><script>
+const $=i=>document.getElementById(i),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+try{$('tok').value=localStorage.getItem('tok')||''}catch(e){}
+if(!$('tok').value)$('tokbox').open=true;
+$('tok').onchange=()=>{try{localStorage.setItem('tok',$('tok').value)}catch(e){}refresh();relog();loadRel();loadDev()};
+const H=()=>({'X-Admin-Token':$('tok').value});
+const dur=s=>{s=Math.max(0,Math.round(s));const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+ return d?`${d} d ${h} h`:h?`${h} h ${m} min`:m?`${m} min ${s%60} s`:`${s} s`};
+const ago=s=>s==null?'never':dur(s)+' ago',n=x=>x==null?'–':Number(x).toLocaleString();
+const set=(id,v,cls)=>{const e=$(id);e.innerHTML=v;e.className=cls||''};
+function pill(t,c){$('pill').textContent=t;$('pill').className='pill '+c}
+
+async function refresh(){
+ let s;try{const r=await fetch('/v1/stats',{headers:H(),cache:'no-store'});
+  if(r.status==404){pill('Wrong token','warn');$('tokbox').open=true;return}
+  if(r.status==429){pill('Too many wrong attempts - wait 15 min','bad');return}s=await r.json()}
+ catch(e){pill('Server not answering','bad');return}
+ const f=s.feed,lm=s.responses_last_min||{},e5=lm['5xx']||0,all=Object.values(lm).reduce((a,b)=>a+b,0);
+ const stale=f.zones_active>0&&(f.last_ok_age_s==null||f.last_ok_age_s>120);
+ if(stale)pill('Flight data delayed','bad');else if(e5>Math.max(5,all*0.05))pill('Errors','warn');else pill('Running','ok');
+ $('upd').textContent='updated '+new Date().toLocaleTimeString();
+ set('h_src',f.last_ok_age_s==null?(f.zones_active?'waiting…':'idle'):(stale?'no data':'OK'),stale?'bad':f.last_ok_age_s==null?'mut':'ok');
+ $('h_src2').textContent=f.provider+' · last answer '+ago(f.last_ok_age_s);
+ set('h_on',n(s.active_5min));$('h_on2').textContent=`${n(s.active_1h)} in the last hour · ${n(s.active_24h)} in 24 h · ${n(s.devices)} registered`;
+ set('h_rpm',n(s.device_requests_last_min)+' <small style="display:inline">/min</small>');
+ $('h_rpm2').textContent=`≈ ${(s.device_requests_last_min/60).toFixed(1)} per second`;
+ const ms=s.server_ms_last_min;set('h_ms',ms.p50+' ms',ms.p95>1000?'warn':'');$('h_ms2').textContent=`typical (median) · 95 %: ${ms.p95} ms · 99 %: ${ms.p99} ms`;
+ set('h_err',n(e5),e5?'bad':'ok');$('h_err2').textContent=`server errors (5xx) of ${n(all)} answers · 4xx: ${n(lm['4xx']||0)}`;
+ const rj=s.rejected||{};set('h_rej',n((rj.bad_key||0)+(rj.rate_limited||0)+(rj.bad_admin||0)),rj.bad_admin?'warn':'');
+ $('h_rej2').textContent=`wrong display key ${n(rj.bad_key||0)} · over limits ${n(rj.rate_limited||0)} · wrong admin token ${n(rj.bad_admin||0)}`;
+ set('s_pr',n(sv_(s).processes));$('s_pr2').textContent=`${sv_(s).role=='all'?'single process':'core + API processes'}`+(s.feed.core_down?' · CORE NOT ANSWERING':'');
+
+ const lg=s.log_last_hour;set('h_log',`${lg.warnings} / ${lg.errors}`,lg.errors?'bad':lg.warnings?'warn':'ok');
+ set('f_up',n(f.upstream_calls_last_min)+' <small style="display:inline">/min</small>');
+ $('f_up2').textContent=`${n(f.upstream_calls_total)} since start · does not grow with the number of displays`;
+ set('f_z',n(f.zones_active));$('f_z2').textContent=f.mode=='world'?'whole world in one call':`full round ≈ ${f.zone_cycle_s} s · oldest area ${f.oldest_zone_age_s} s old · tracked flights ${f.tracked_watch}`;
+ set('f_ac',n(f.aircraft_in_memory));$('f_ac2').textContent='each display gets its nearest 32';
+ if(f.last_failure){set('f_fail',ago(f.last_failure.age_s),f.last_failure.age_s<120?'bad':'');$('f_fail2').textContent=f.last_failure.what+` · ${n(f.upstream_failures_total)} failures since start`}
+ else{set('f_fail','none','ok');$('f_fail2').textContent='no failed calls since start'}
+ const o=s.other_upstream_calls;set('f_oth',n(o.adsbdb+o.weather));$('f_oth2').textContent=`routes ${n(o.adsbdb)} · weather ${n(o.weather)} · ${n(s.cached_responses)} kept in the database`;
+ const sv=s.server;set('s_up',dur(sv.uptime_s));$('s_up2').textContent='since '+new Date(sv.started*1000).toLocaleString()+' · server '+sv.version;
+ set('s_mem',sv.rss_mb!=null?sv.rss_mb+' MB':'–');$('s_mem2').textContent=sv.host_mem_used_pct!=null?`computer memory ${sv.host_mem_used_pct} % used · ${sv.threads} threads`:'';
+ set('s_cpu',sv.cpu_pct!=null?Math.round(sv.cpu_pct)+' %':'–',sv.cpu_pct>80?'warn':'');$('s_cpu2').textContent=sv.host_cpu_pct!=null?`whole computer ${Math.round(sv.host_cpu_pct)} % · disk free ${sv.disk_free_gb} GB`:'';
+ set('s_db',s.db_bytes!=null?(s.db_bytes/1048576).toFixed(1)+' MB':'–');$('s_db2').textContent=s.db_kind+` · ${n(s.memory_cache)} answers cached in memory`;
+ const rt=s.responses_total||{};set('s_resp',n(Object.values(rt).reduce((a,b)=>a+b,0)));
+ $('s_resp2').textContent=Object.entries(rt).sort().map(([k,v])=>`${k}: ${n(v)}`).join(' · ');
+ const fw=Object.entries(s.firmware).sort((a,b)=>b[1]-a[1]),mx=Math.max(1,...fw.map(x=>x[1]));
+ $('dev').textContent=fw.length?'Firmware on registered displays:':'No displays registered yet.';
+ $('fwbars').innerHTML=fw.map(([k,v])=>`<div><span style="width:90px">${esc(k)}</span><i style="width:${Math.max(2,v/mx*60)}%"></i><span>${n(v)}</span></div>`).join('');
+ const dl=s.updates.downloads_since_start||{};REL_DL=dl;
+}
+const sv_=s=>s.server||{};
+let REL_DL={},dT=null;
+function loadDev(){clearTimeout(dT);dT=setTimeout(async()=>{const r=await fetch('/v1/admin/devices?limit=50&q='+encodeURIComponent($('dq').value.trim()),{headers:H()});if(!r.ok)return;
+ const j=await r.json(),ago2=t=>dur(Date.now()/1000-t)+' ago';
+ $('dtab').innerHTML='<tr><th>ID</th><th>Device number</th><th>Firmware</th><th>Last seen</th><th>Requests</th><th></th></tr>'+(j.devices.map(d=>
+  `<tr><td>${esc(d.id)}</td><td>${esc(d.hw_id||'–')}</td><td>${esc(d.fw||'?')}</td><td>${ago2(d.last_seen)}</td><td>${n(d.requests)}</td>
+   <td><button class="del" onclick="blk('${esc(d.id)}',${d.blocked?0:1})">${d.blocked?'Unblock':'Block'}</button>${d.blocked?' <small class="bad">blocked</small>':''}</td></tr>`).join('')||'<tr><td class="mut">No displays found</td></tr>')},250)}
+async function blk(id,b){if(b&&!confirm('Block '+id+'? It will stop getting data.'))return;await fetch(`/v1/admin/devices/block?id=${encodeURIComponent(id)}&blocked=${b}`,{method:'POST',headers:H()});loadDev()}
+async function loadRel(){const r=await fetch('/v1/admin/releases',{headers:H()});
+ if(!r.ok){$('rel').innerHTML='<tr><td class="bad">Wrong token</td></tr>';return}
+ const j=await r.json();
+ $('rel').innerHTML='<tr><th>Version</th><th>Size</th><th>Uploaded</th><th>Downloads*</th><th>What\'s new</th><th></th></tr>'+(j.releases.map(x=>
+  `<tr><td><b>${esc(x.version)}</b></td><td>${(x.size/1048576).toFixed(2)} MB</td><td>${new Date(x.created_at*1000).toLocaleString()}</td>
+   <td>${n(REL_DL[x.version]||0)}</td><td>${esc(x.notes)}</td><td><button class="del" onclick="del('${esc(x.version)}')">Remove</button></td></tr>`).join('')||'<tr><td class="mut">None yet</td></tr>')+
+  '<tr><td colspan="6"><small>* since the server started. Displays are only offered the newest version that is newer than theirs.</small></td></tr>'}
+async function up(){const f=$('f').files[0];if(!f){$('m').className='msg bad';$('m').textContent='Choose firmware.bin';return}
+ $('m').className='msg';$('m').textContent='Uploading…';
+ const r=await fetch('/v1/admin/firmware?notes='+encodeURIComponent($('n').value),{method:'POST',headers:H(),body:f});
+ const j=await r.json().catch(()=>({}));
+ if(r.ok){$('m').className='msg ok';$('m').textContent=`Version ${j.version} is now offered to displays.`;loadRel()}
+ else{$('m').className='msg bad';$('m').textContent=j.detail||('Error '+r.status)}}
+async function del(v){if(!confirm('Stop offering '+v+'?'))return;await fetch('/v1/admin/firmware/'+encodeURIComponent(v),{method:'DELETE',headers:H()});loadRel()}
+
+let LOGS=[],LAST=0;
+function relog(){LOGS=[];LAST=0;$('logs').innerHTML='';pollLogs()}
+async function pollLogs(){if($('pause').checked)return;
+ try{const r=await fetch(`/v1/admin/logs?after=${LAST}&level=${$('lv').value}`,{headers:H(),cache:'no-store'});if(!r.ok)return;
+  const j=await r.json();if(j.last<LAST){relog();return}LAST=j.last;if(j.logs.length){LOGS=LOGS.concat(j.logs).slice(-1500);drawLogs()}}catch(e){}}
+function drawLogs(){const q=$('q').value.trim().toLowerCase();
+ const rows=LOGS.filter(r=>!q||(r.msg+' '+r.src).toLowerCase().includes(q)).slice(-600).reverse();
+ $('logs').innerHTML=rows.map(r=>`<div class="l-${r.lvl}">${new Date(r.t*1000).toLocaleTimeString()}  ${r.lvl.padEnd(7)} ${esc(r.src)}: ${esc(r.msg)}</div>`).join('')||'<span class="mut">Nothing yet.</span>'}
+
+if($('tok').value){refresh();loadRel();relog();loadDev()}
+setInterval(()=>{if($('tok').value)refresh()},5000);setInterval(()=>{if($('tok').value)pollLogs()},3000);setInterval(()=>{if($('tok').value)loadRel()},30000);
+</script></body></html>

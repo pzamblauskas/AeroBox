@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>AeroBox</title>
+<style>
+/* Fonas - tamsiai melsvai pilkas (kaip anksciau), akcentai - gintariniai (aviacinis stilius) */
+:root{--bg:#0d1117;--card:#161b22;--card2:#21262d;--line:#30363d;--fg:#e6edf3;--mut:#9aa4af;--acc:#f5b60a;--acc2:#ffd766;--ok:#86c94a;--bad:#ff5b4a;--warn:#ffb300}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg);margin:0;padding:0 16px 40px}
+.c{max-width:680px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 10px}
+header h1{font-size:22px;margin:0;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+header h1 b{color:var(--acc)}
+.pill{font-size:13px;padding:5px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px}
+.stk{position:sticky;top:0;background:var(--bg);z-index:5;padding-top:4px}.stk .ban{margin-top:2px}
+nav button{flex:1 0 auto;min-width:0;width:auto;margin:0;padding:10px 8px;background:var(--card);color:var(--mut);border:1px solid var(--line);font-weight:500;font-size:14px}
+nav button.on{color:#141003;background:var(--acc);border-color:var(--acc)}
+section{display:none}section.on{display:block}
+h2{font-size:13px;margin:24px 0 8px;color:var(--acc);font-weight:600;letter-spacing:1.2px;text-transform:uppercase}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.k span{font-size:12px;color:var(--mut)}.k b{display:block;font-size:17px;margin-top:3px;word-break:break-word}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:8px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.mut{color:var(--mut)}
+.ban{border-radius:12px;padding:12px 14px;margin:6px 0 10px;font-size:14px;line-height:1.4;display:none}
+.ban.on{display:block}.ban.i{background:#1f1d14;border:1px solid var(--acc)}.ban.w{background:#2a1d10;border:1px solid var(--warn)}.ban.e{background:#2d1214;border:1px solid var(--bad)}
+.ban a{color:var(--acc2)}
+.ban.u{background:#122416;border:1px solid var(--ok);box-shadow:0 6px 18px rgba(0,0,0,.45)}.ban .bb{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.ban .bb button{width:auto;margin:0;padding:8px 14px;font-size:14px}.ban .bar{margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:7px 4px;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:500}
+td button{width:auto;margin:0;padding:4px 9px;font-size:12px;border-radius:7px}
+label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
+input,select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:16px}
+input[type=range]{padding:0;accent-color:var(--acc)}
+input[type=checkbox],input[type=radio]{width:auto;margin:0 10px 0 2px;accent-color:var(--acc);transform:scale(1.3);flex:none}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.chk{display:flex;align-items:center;margin:16px 0 4px;color:var(--fg);font-size:15px}
+button{width:100%;padding:13px;margin-top:16px;border:0;border-radius:10px;background:var(--acc);color:#141003;font-size:16px;font-weight:600;cursor:pointer}
+button.s{background:var(--card2);color:var(--fg);border:1px solid var(--line)}button.d{background:#371109;color:#ffb3a6;border:1px solid #7a2a1c}
+button:disabled{opacity:.5}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+small{color:var(--mut);font-size:12px;line-height:1.4}
+.msg{margin-top:10px;font-size:14px;min-height:1em}
+.net{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:var(--bg);cursor:pointer}
+.net.sel{border-color:var(--acc);background:#2a2410}
+.bar{height:8px;background:var(--card2);border-radius:99px;overflow:hidden;margin-top:10px;display:none}.bar i{display:block;height:100%;width:0;background:var(--acc)}
+.led{padding:10px;background:#050506;margin:0 0 10px}.led canvas{width:100%;max-width:520px;margin:auto;display:block;border-radius:4px}
+.led small{display:block;text-align:center;margin-top:6px}
+#map{height:280px;border-radius:12px;margin-bottom:8px;display:none}
+.val{float:right;color:var(--fg)}
+.trk h3{margin:0;font-size:22px;letter-spacing:.5px}.trk .big{font-size:20px;font-weight:600;margin:10px 0 2px}.trk .lbl{color:var(--acc);font-size:15px;font-weight:600;margin-bottom:2px}
+.prog{height:6px;background:var(--card2);border-radius:99px;margin:12px 0 4px;position:relative}.prog i{position:absolute;left:0;top:0;bottom:0;background:var(--acc);border-radius:99px}
+.ends{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}
+footer{margin-top:28px;text-align:center}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.g2 .chk{margin:12px 0 2px;font-size:14px}
+.cp{display:flex;align-items:center;gap:10px;margin:10px 0 0;color:var(--fg);font-size:14px}.cp input{width:46px;height:34px;padding:2px;flex:none}
+details{margin-top:14px}.sp{color:#ff4fd0;font-weight:600}summary{cursor:pointer;color:var(--acc);font-size:14px}
+</style>
+</head>
+<body><div class="c">
+<header><h1>Aero<b>Box</b></h1><span class="pill" id="pill" role="status">…</span></header>
+
+<div class="ban e" id="b_safe" role="alert"><b>Safe mode.</b> AeroBox failed to start several times in a row, so brightness is limited for now. The most common cause is a power supply that is too weak – please use the power supply that came with AeroBox.</div>
+<div class="ban e" id="b_disp" role="alert"><b>The display did not start.</b> This page still works. Restart AeroBox; if the display stays dark, please contact support.</div>
+<div class="ban i" id="b_setup"><b>Welcome!</b> In <a href="#" onclick="return tab('wifi')">Wi-Fi</a>, connect to your home network. AeroBox then finds its location by itself – you can correct it under Location. Afterwards this page opens at <b>http://aerobox.local</b>.</div>
+<div class="ban w" id="b_pow">Brightness was lowered automatically to stay within the power supply rating.</div>
+
+<div class="stk">
+<div class="ban u" id="b_upd" role="status"><div id="b_upd_t"></div>
+<div class="bar" id="b_upd_bar"><i></i></div>
+<div class="bb" id="b_upd_bb"><button onclick="upd()" id="b_upd_go">Update now</button><button class="s" onclick="return tab('sys')">Details</button><button class="s" onclick="updLater()">Later</button></div></div>
+<nav aria-label="Sections">
+<button data-t="st" class="on">Status</button><button data-t="disp">Display</button><button data-t="trk">Track</button><button data-t="loc">Location</button><button data-t="wifi">Wi-Fi</button><button data-t="sys">System</button>
+</nav>
+</div>
+
+<section id="st" class="on">
+<div class="box led" id="led_box"><canvas id="led" aria-label="Live view of the display"></canvas><small>This is what the display shows right now</small></div>
+<div class="g">
+<div class="k"><span>Wi-Fi</span><b id="s_wifi">…</b></div>
+<div class="k"><span>Flight data</span><b id="s_data">…</b></div>
+<div class="k"><span>Flights in range</span><b id="s_n">…</b></div>
+<div class="k"><span>Weather</span><b id="s_wx">…</b></div>
+</div>
+<h2>Overhead now</h2>
+<div class="box" style="padding:4px 10px"><table><thead><tr><th>Flight</th><th>Type</th><th>Route</th><th>Distance</th><th>Altitude</th><th></th></tr></thead>
+<tbody id="ac"><tr><td colspan="6"><small>Loading…</small></td></tr></tbody></table></div>
+</section>
+
+<section id="disp">
+<div class="box">
+<label for="view">What to show</label>
+<select id="view"><option value="0">Automatic</option><option value="1">Flight cards</option><option value="2">Radar</option><option value="6">Route map</option><option value="3">Clock and weather</option><option value="4">Tracked flight</option><option value="5">Custom screen</option></select>
+<div id="pane_box" style="display:none">
+<div class="row"><div><label for="pl">Left half</label><select id="pl"></select></div><div><label for="pr">Right half</label><select id="pr"></select></div></div>
+<small>Each half is a square 64×64 window, and the two halves always show different windows.</small>
+</div>
+<label for="bright">Brightness <span class="val" id="bright_v"></span></label>
+<input id="bright" type="range" min="128" max="255">
+<small>1 % is the lowest level that still looks good on the LEDs.</small>
+</div>
+<div id="sec_card">
+<h2>Flight cards</h2>
+<div class="box">
+<label for="csec">Each card stays on screen for</label>
+<select id="csec"><option value="3">3 seconds</option><option value="4">4 seconds</option><option value="5">5 seconds</option><option value="6">6 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option></select>
+<small>Then the next nearby flight. Choose longer if there is not enough time to read the whole card. The tracked flight's card stays at least 8 seconds.</small>
+<label>The card shows</label>
+<div class="g2" id="cf_box"></div><small>The flight number is always shown.</small>
+<label class="chk"><input type="checkbox" id="flap">Flight cards change like a departure board</label>
+<label class="chk"><input type="checkbox" id="rare">Mark rare aircraft</label>
+<div id="cw0"></div>
+</div>
+</div>
+<div id="sec_radar">
+<h2>Radar</h2>
+<div class="box">
+<label for="rs">Radar animation</label>
+<select id="rs"><option value="0">None</option><option value="1">Sonar</option><option value="2">Classic sweep</option></select>
+<label for="rm">Aircraft on the radar</label>
+<select id="rm"><option value="0">Arrows</option><option value="1">Dots</option><option value="2">Triangles</option></select>
+<div id="cw1"></div>
+</div>
+</div>
+<div id="sec_map">
+<h2>Route map</h2>
+<div class="box">
+<label for="ms">Map colours</label>
+<select id="ms"><option value="0">Land and water filled</option><option value="1">Coastlines only</option></select>
+<small>Land, water and border colours are below; a colour theme sets them automatically. Black means not lit: by default the water stays dark. The tracked flight's map uses these colours too: Plane and flight for the plane, Route line for its route – brighter where it has already flown.</small>
+<div id="cw2"></div>
+</div>
+</div>
+<div id="sec_clock">
+<h2>Clock and weather</h2>
+<div class="box">
+<div class="row"><div><label for="tu">Temperature</label><select id="tu"><option value="0">°C</option><option value="1">°F</option></select></div>
+<div><label for="c12">Clock</label><select id="c12"><option value="0">24-hour</option><option value="1">12-hour</option></select></div></div>
+<div id="cw3"></div>
+</div>
+</div>
+<div id="sec_track">
+<h2>Tracked flight</h2>
+<div class="box">
+<small>The tracked flight's card. Choose the flight under Track. The tracked flight's map uses the Route map colours.</small>
+<div id="cw4"></div>
+</div>
+</div>
+<h2>General</h2>
+<div class="box">
+<label for="font">Font</label>
+<select id="font"><option value="2">Smooth</option><option value="0">Small pixel</option><option value="1">Medium pixel</option><option value="3">Classic pixel</option></select>
+<small>On a single small panel, the Smooth and Classic fonts use the medium pixel font for small text.</small>
+<label class="chk"><input type="checkbox" id="flip">Rotate the picture 180°</label>
+<label>Units</label>
+<div class="row"><div><label for="du">Distance</label><select id="du"><option value="0">Kilometres</option><option value="1">Miles</option><option value="2">Nautical miles</option></select></div>
+<div><label for="au">Altitude</label><select id="au"><option value="0">Flight level</option><option value="1">Feet</option><option value="2">Metres</option></select></div></div>
+<div class="row"><div><label for="vu">Climb / descent</label><select id="vu"><option value="0">Feet per minute</option><option value="1">Metres per second</option></select></div>
+<div><label for="spd">Speed</label><select id="spd"><option value="0">Knots</option><option value="1">km/h</option><option value="2">mph</option></select></div></div>
+<label for="ovh">Plane overhead alert</label>
+<select id="ovh"><option value="0">Off</option><option value="1">Within 1 km</option><option value="2">Within 2 km</option><option value="3">Within 3 km</option><option value="5">Within 5 km</option></select>
+<small>At most once a minute, once per plane. Near an airport choose a smaller distance or Off.</small>
+</div>
+<h2>Night mode</h2>
+<div class="box">
+<div class="row"><div><label for="ns">From</label><input id="ns" type="time" step="60" required></div><div><label for="ne">Until</label><input id="ne" type="time" step="60" required></div></div>
+<label for="nb">Brightness at night <span class="val" id="nb_v"></span></label>
+<input id="nb" type="range" min="127" max="255">
+<small>Slide fully to the left for <b>Off</b>: the display stays dark at night, and a press of the button lights it for a minute. If “From” and “Until” are the same, night mode is off.</small>
+</div>
+<button onclick="saveDisp()">Save</button><div class="msg" id="m_disp" role="status"></div>
+</section>
+
+<section id="trk">
+<div class="box">
+<label for="tq">Flight to track</label>
+<input id="tq" maxlength="11" placeholder="e.g. BAW123, BA123, G-EUUA or 4CA7B5" autocapitalize="characters" autocorrect="off" autocomplete="off" spellcheck="false">
+<small>Enter the callsign, flight number, aircraft registration or ICAO address, for example BAW123, BA123, G-EUUA or 4CA7B5.</small>
+<label for="tl">Name for this flight</label>
+<input id="tl" maxlength="20" placeholder="e.g. Mom's flight home" autocomplete="off">
+<small>Shown on the display in large letters before the flight's card, until tracking stops. Up to 20 letters, digits and simple punctuation; accented letters are shown without accents.</small>
+<div class="row"><button onclick="track()">Track</button><button class="s" onclick="untrack()">Stop</button></div>
+<div class="msg" id="m_trk" role="status"></div>
+</div>
+<div class="box trk" id="t_box" style="display:none"></div>
+<h2>While a flight is tracked, show</h2>
+<div class="box">
+<label class="chk"><input type="checkbox" id="ts1">Flight card</label>
+<label class="chk"><input type="checkbox" id="ts2">Route map</label>
+<label class="chk"><input type="checkbox" id="ts4">Radar, while the flight is within your range</label>
+<label class="chk"><input type="checkbox" id="ts8">Pulsing ring around the tracked plane</label>
+<div class="msg" id="m_ts" role="status"></div>
+<small>The display switches to the tracked flight right away and shows the chosen windows in turn. It stays there until you change the view or press Stop. After landing it shows LANDED for 2 more minutes, then tracking stops and the previous view comes back. The card or the map always stays on.</small>
+</div>
+</section>
+
+<section id="loc">
+<div id="map"></div>
+<div class="box">
+<div class="msg" id="loc_auto"></div>
+<small id="map_hint">Enter your home coordinates. In Google Maps, long-press on your home and copy the numbers.</small>
+<label for="coord">Coordinates</label><input id="coord" inputmode="decimal" placeholder="51.4700, -0.4543" autocomplete="off">
+<label for="rg">Range <span class="val" id="rg_v"></span></label>
+<input id="rg" type="range" min="5" max="100" step="1">
+<small>A larger range shows more flights, each one smaller on the radar.</small>
+</div>
+<button onclick="saveLoc()">Save location</button><div class="msg" id="m_loc" role="status"></div>
+</section>
+
+<section id="wifi">
+<div class="box"><span id="w_cur" style="font-size:15px">…</span></div>
+<h2>Connect to a network</h2>
+<div class="box">
+<div id="nets"><small>Tap “Find networks”.</small></div>
+<button class="s" onclick="scan()" id="b_scan" style="margin-top:8px">Find networks</button>
+<label for="ssid">Network name</label><input id="ssid" maxlength="32" placeholder="2.4 GHz networks only" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false">
+<label for="pass">Password</label><input id="pass" type="password" maxlength="64" autocomplete="off">
+<label class="chk"><input type="checkbox" onchange="$('pass').type=this.checked?'text':'password'">Show password</label>
+<button onclick="joinWifi()" id="b_join">Connect</button>
+<div class="msg" id="m_wifi" role="status"></div>
+</div>
+<button class="d" onclick="forgetWifi()">Forget this Wi-Fi network</button>
+</section>
+
+<section id="sys">
+<h2>Flight data</h2>
+<div class="box">
+<label class="chk"><input type="radio" name="dm" id="dm0" value="0">AeroBox flight data</label>
+<div id="os_box">
+<label for="srv">AeroBox server <span class="val mut" id="srv_st"></span></label>
+<input id="srv" maxlength="63" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Leave empty for the default">
+<small>For example http://192.168.0.10:8080. The server gives each display its own access key automatically.</small>
+<label for="osid">OpenSky client ID <span class="val mut" id="os_saved"></span></label>
+<input id="osid" maxlength="63" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Leave empty to turn off">
+<label for="ossec">OpenSky client secret</label>
+<input id="ossec" type="password" maxlength="63" autocomplete="off" spellcheck="false" placeholder="Client secret">
+<small>Optional. Adds flights that the AeroBox data does not see. Create a free account at opensky-network.org, then make an API client on your Account page.</small>
+<div class="msg" id="osst"></div>
+</div>
+<label class="chk"><input type="radio" name="dm" id="dm1" value="1">My own API key</label>
+<div id="key_box" style="display:none">
+<label for="key">API key <span class="val mut" id="key_saved"></span></label>
+<input id="key" type="password" maxlength="71" autocomplete="off" spellcheck="false" placeholder="API key">
+<label for="kps">Update every</label>
+<select id="kps"><option value="5">5 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option><option value="30">30 seconds</option><option value="60">1 minute</option><option value="120">2 minutes</option><option value="300">5 minutes</option></select>
+<small id="kps_info"></small>
+<small>Every update is one request on your plan; a tracked flight outside your range adds at most one request every 30 seconds.</small>
+<div class="msg" id="kst"></div>
+</div>
+</div>
+<h2>Time</h2>
+<div class="box"><label for="tz">Time zone</label>
+<select id="tz">
+<option value="auto" id="tz_auto">Automatic</option>
+<option value="GMT0BST,M3.5.0/1,M10.5.0">United Kingdom, Ireland</option>
+<option value="WET0WEST,M3.5.0/1,M10.5.0">Portugal, Canary Islands</option>
+<option value="CET-1CEST,M3.5.0,M10.5.0/3">Central Europe</option>
+<option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Eastern Europe</option>
+<option value="TRT-3">Turkey</option>
+<option value="MSK-3">Moscow, Minsk</option>
+<option value="&lt;+04&gt;-4">United Arab Emirates</option>
+<option value="IST-5:30">India</option>
+<option value="CST-8">China, Singapore</option>
+<option value="JST-9">Japan, Korea</option>
+<option value="AEST-10AEDT,M10.1.0,M4.1.0/3">Eastern Australia</option>
+<option value="NZST-12NZDT,M9.5.0,M4.1.0/3">New Zealand</option>
+<option value="&lt;-03&gt;3">Brazil</option>
+<option value="AST4ADT,M3.2.0,M11.1.0">Canada Atlantic</option>
+<option value="EST5EDT,M3.2.0,M11.1.0">US &amp; Canada Eastern</option>
+<option value="CST6CDT,M3.2.0,M11.1.0">US &amp; Canada Central</option>
+<option value="MST7MDT,M3.2.0,M11.1.0">US &amp; Canada Mountain</option>
+<option value="MST7">Arizona</option>
+<option value="PST8PDT,M3.2.0,M11.1.0">US &amp; Canada Pacific</option>
+<option value="AKST9AKDT,M3.2.0,M11.1.0">Alaska</option>
+<option value="HST10">Hawaii</option>
+<option value="UTC0">UTC</option>
+</select>
+<small>Automatic uses the time zone of the phone or computer that opens this page. The time itself is set over the internet.</small></div>
+<button onclick="saveSys()">Save</button><div class="msg" id="m_sys" role="status"></div>
+
+<h2>Firmware update</h2>
+<div class="box" id="upd_box" style="display:none">
+<p id="upd_t"></p>
+<button onclick="upd()" id="b_upd">Update</button>
+<div class="bar" id="upd_bar"><i></i></div><div class="msg" id="m_upd" role="status"></div>
+</div>
+<div class="box">
+<label for="fw">Firmware file</label>
+<input type="file" id="fw" accept=".bin">
+<small>Your settings are kept.</small>
+<button class="s" onclick="ota()" id="b_ota">Upload firmware</button>
+<div class="bar" id="ota_bar"><i></i></div><div class="msg" id="m_ota" role="status"></div>
+</div>
+
+<h2>About this device</h2>
+<div class="box"><table id="info"></table></div>
+<div class="row"><button class="s" onclick="restart()">Restart</button><button class="d" onclick="factory()">Factory reset</button></div>
+</section>
+
+<footer><small>AeroBox <span id="fwv"></span></small></footer>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+let S={},first=true,map,mk,cir,wPoll=null;
+function tab(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));
+document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==t));if(t=='loc'&&map)setTimeout(()=>map.invalidateSize(),50);return false}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function msg(id,t,cls){$(id).innerHTML=t?'<span class="'+(cls||'')+'">'+t+'</span>':''}
+/* every request carries X-AeroBox: the device refuses change requests that other websites try to send */
+async function api(url,o){o=o||{};return fetch(url,Object.assign({cache:'no-store'},o,{headers:Object.assign({'X-AeroBox':'1'},o.headers||{})}))}
+async function post(url,data){const r=await api(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data||{}).toString()});return r.json()}
+function fmtUp(s){const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return d?d+' d '+h+' h':h?h+' h '+m+' min':m+' min'}
+function dist(km){if(km<0)return '–';const v=km*[1,0.621371,0.539957][S.du|0];return (v<10?v.toFixed(1):Math.round(v))+[' km',' mi',' NM'][S.du|0]}
+function alt(ft,gnd){if(gnd)return 'on ground';const n=x=>Math.round(x).toLocaleString('en-US');return S.au==1?n(ft)+' ft':S.au==2?n(ft*0.3048)+' m':'FL'+String(Math.round(ft/100)).padStart(3,'0')}
+function temp(c){return S.tu==1?Math.round(c*1.8+32)+' °F':Math.round(c)+' °C'}
+const PANES=['Radar','Flight card','Nearest flights list','Clock and weather','Tracked flight','Route map'];
+const SPECIAL=['','RARE','MILITARY','HELICOPTER','BUSINESS JET'];
+const CF=[['Aircraft type',1],['Registration',2],['Route',4],['Altitude',8],['Distance',16],['Speed',32],['Heading',64],['Climb / descent',128],['Progress bar',256],['Card number',512]];
+const COLS=['Flight number','Aircraft type','Altitude','Heading','Distance, speed, route','Climbing','Descending','Progress bar','Clock','Date','Radar','Map land','Map water','Map borders'];
+/* Langai (kaip win_t): kurios spalvos jiems svarbios ir kaip jos ten vadinasi; kitos lieka temos */
+const WINS=[{r:[0,1,2,3,4,5,6,7,10],l:{10:'Overhead alert rings'}},{r:[0,4,5,6,10],l:{0:'Flight numbers',4:'List text',10:'Radar rings and sweep'}},
+ {r:[0,4,7,10,11,12,13],l:{0:'Plane and flight',4:'Text',7:'Route line',10:'Coastline'}},{r:[8,9,4,10],l:{4:'Weather',10:'Planes in range'}},
+ {r:[0,1,2,3,4,5,6,7,10],l:{10:'Within range'}}];
+const THEMES=['Default','Amber','Ice blue','Green radar','White','Night red'];
+let WC=WINS.map(()=>COLS.map(()=>'000000'));
+for(const id of ['pl','pr'])PANES.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;$(id).appendChild(o)});
+$('cf_box').innerHTML=CF.map(c=>'<label class="chk"><input type="checkbox" data-cf="'+c[1]+'">'+c[0]+'</label>').join('');
+WINS.forEach((w,k)=>$('cw'+k).innerHTML='<label for="th'+k+'">Colours</label><select id="th'+k+'">'+THEMES.map((n,t)=>'<option value="'+t+'">'+n+'</option>').join('')+
+ '<option value="255">Custom</option></select><details><summary>Change individual colours</summary><div class="g2">'+
+ w.r.map(i=>'<label class="cp"><input type="color" id="c'+k+'_'+i+'">'+(w.l[i]||COLS[i])+'</label>').join('')+
+ '</div><small>Changing a colour switches this window to Custom. Choosing a theme again restores its colours. Very dark colours are hard to see on the LEDs.</small>'+
+ '<button class="s" id="ca'+k+'">Use these colours in all windows</button></details>');
+function cfVal(){let v=0;document.querySelectorAll('[data-cf]').forEach(c=>{if(c.checked)v|=+c.dataset.cf});return v}
+function fillCols(s){const t=String(s.theme).split(','),c=(s.cols||'').split(';');
+ WINS.forEach((w,k)=>{$('th'+k).value=t[k]||0;WC[k]=(c[k]||c[0]||'').split(',');w.r.forEach(i=>{if(WC[k][i])$('c'+k+'_'+i).value='#'+WC[k][i]})})}
+function reCols(){return api('/api/status').then(r=>r.json()).then(fillCols)}
+document.querySelectorAll('[data-cf]').forEach(c=>c.onchange=()=>post('/api/settings',{cf:cfVal()}).then(()=>{S.cf=cfVal()}).catch(()=>{}));
+WINS.forEach((w,k)=>{
+ w.r.forEach(i=>$('c'+k+'_'+i).onchange=()=>{WC[k][i]=$('c'+k+'_'+i).value.slice(1);post('/api/settings',{w:k,cols:WC[k].join(',')}).then(()=>{$('th'+k).value=255}).catch(()=>{})});
+ $('th'+k).onchange=()=>{if($('th'+k).value==255)return;post('/api/settings',{w:k,theme:$('th'+k).value}).then(reCols).catch(()=>{})};
+ $('ca'+k).onclick=()=>{const t=$('th'+k).value;post('/api/settings',t==255?{cols:WC[k].join(',')}:{theme:t}).then(reCols).catch(()=>{})}});
+function speed(kt){return S.spd==1?Math.round(kt*1.852)+' km/h':S.spd==2?Math.round(kt*1.150779)+' mph':kt+' kt'}
+function eta(m){return m<60?m+' min':Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min'}
+function hhmm(min){const d=new Date(Date.now()+min*60000);return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:S.c12==1})}
+/* brightness 128..255 on the device = 1..100 % here; at night 127 on the slider = Off (0 on the device) */
+function pct(v){return v<128?'Off':1+Math.round((v-128)*99/127)+' %'}
+$('bright').oninput=()=>{$('bright_v').textContent=pct($('bright').value)};
+$('bright').onchange=()=>post('/api/settings',{bright:$('bright').value}).catch(()=>{});
+$('nb').oninput=()=>{$('nb_v').textContent=pct($('nb').value)};
+function nbVal(){const v=+$('nb').value;return v<128?0:v}
+/* night times: minutes after midnight on the device, "HH:MM" in the time fields */
+function toTime(m){m=(+m||0)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
+function toMin(t){const p=String(t).split(':');return p.length<2||isNaN(+p[0])||isNaN(+p[1])?null:(+p[0])*60+(+p[1])}
+for(const id of ['rare','flap'])$(id).onchange=()=>post('/api/settings',{[id]:$(id).checked?1:0}).catch(()=>{});
+for(const id of ['view','font','rs','rm','du','au','vu','tu','spd','c12','pl','pr','ovh','csec','ms'])$(id).onchange=()=>{if(id=='view')paneBox();if(id=='pl'||id=='pr')paneSync();if(id=='view'||id=='pl'||id=='pr')secShow();post('/api/settings',{[id]:$(id).value}).then(()=>{S[id]=+$(id).value;if(id=='du')rgShow()}).catch(()=>{})};
+function paneBox(){$('pane_box').style.display=$('view').value=='5'?'block':'none'}
+/* the two halves cannot show the same window: the other half's choice is greyed out */
+/* Display: tik pasirinkto vaizdo langu nustatymai (Automatic - visi, Custom screen - abieju pusiu) */
+function secShow(){const v=+$('view').value,P=['radar','card','card','clock','track','map'];
+ const on=v==0?['card','radar','map','clock','track']:v==1?['card']:v==2?['radar']:v==6?['map']:v==3?['clock']:
+  v==4?['track','map','radar']:[P[+$('pl').value],P[+$('pr').value]];
+ for(const k of ['card','radar','map','clock','track'])$('sec_'+k).style.display=on.includes(k)?'':'none'}
+function paneSync(){for(const [a,b] of [['pl','pr'],['pr','pl']])[...$(a).options].forEach(o=>o.disabled=o.value==$(b).value)}
+$('tq').onkeydown=e=>{if(e.key=='Enter')track()};
+
+/* --- tracked flight: name and windows --- */
+/* the display has Latin capitals, digits and simple punctuation: accents are dropped (Ą→A), other characters removed */
+function cleanLabel(v){const sp={'ł':'l','Ł':'L','ø':'o','Ø':'O','ß':'ss','æ':'ae','Æ':'AE','œ':'oe','Œ':'OE','đ':'d','Đ':'D','þ':'th','Þ':'Th','’':"'",'‘':"'",'–':'-','—':'-'};
+ return String(v).replace(/[łŁøØßæÆœŒđĐþÞ’‘–—]/g,c=>sp[c]).normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[^A-Za-z0-9 .,!?'&+:\/()#*@-]/g,'').replace(/\s+/g,' ').trim().slice(0,20)}
+$('tl').onchange=()=>{const v=cleanLabel($('tl').value);$('tl').value=v;
+ post('/api/settings',{tlb:v}).then(j=>msg('m_trk',j.ok?(v?'Name saved.':'Name removed.'):esc(j.err),j.ok?'ok':'bad')).catch(()=>msg('m_trk','Could not save.','bad'))};
+function tsVal(){return ($('ts1').checked?1:0)|($('ts2').checked?2:0)|($('ts4').checked?4:0)|($('ts8').checked?8:0)}
+for(const b of [1,2,4,8])$('ts'+b).onchange=()=>{if(!(tsVal()&3)){$('ts'+b).checked=true;return msg('m_ts','The card or the map has to stay on.','warn')}
+ post('/api/settings',{tsh:tsVal()}).then(j=>msg('m_ts',j.ok?'Saved.':esc(j.err),j.ok?'ok':'bad')).catch(()=>msg('m_ts','Could not save.','bad'))};
+
+/* --- time zone: the browser's zone as a POSIX TZ string (newlib on the device understands <+02>-2 style names) --- */
+function posixTZ(){
+ const y=new Date().getFullYear(),day=86400000,off=t=>-new Date(t).getTimezoneOffset();
+ const tr=[];let o=off(Date.UTC(y,0,1));
+ for(let d=1;d<=366&&tr.length<2;d++){const t=Date.UTC(y,0,1)+d*day,o2=off(t);
+  if(o2!=o){let a=t-day,b=t;while(b-a>60000){const m=Math.floor((a+b)/120000)*60000;if(off(m)==o)a=m;else b=m}tr.push({t:b,from:o,to:o2});o=o2}}
+ const two=n=>String(n).padStart(2,'0');
+ const name=m=>'<'+(m<0?'-':'+')+two(Math.floor(Math.abs(m)/60))+(Math.abs(m)%60?two(Math.abs(m)%60):'')+'>';
+ const ofs=m=>(m>0?'-':'')+Math.floor(Math.abs(m)/60)+(Math.abs(m)%60?':'+two(Math.abs(m)%60):'');
+ if(tr.length<2){const m=off(Date.now());return name(m)+ofs(m)}
+ const st=Math.min(tr[0].from,tr[0].to),ds=Math.max(tr[0].from,tr[0].to);
+ const rule=x=>{const l=new Date(x.t+x.from*60000),mo=l.getUTCMonth()+1,dd=l.getUTCDate(),dim=new Date(Date.UTC(l.getUTCFullYear(),mo,0)).getUTCDate();
+  const wk=dd+7>dim?5:Math.ceil(dd/7),mins=l.getUTCHours()*60+l.getUTCMinutes();
+  return 'M'+mo+'.'+wk+'.'+l.getUTCDay()+(mins==120?'':'/'+Math.floor(mins/60)+(mins%60?':'+two(mins%60):''))};
+ return name(st)+ofs(st)+name(ds)+ofs(ds)+','+rule(tr.find(x=>x.to==ds))+','+rule(tr.find(x=>x.to==st))}
+/* the same zone written differently ("EET-2EEST,M3.5.0/3,..." vs "<+02>-2<+03>-3,M3.5.0/3,...") compares equal */
+function tzCanon(s){const m=/^(<[^>]*>|[A-Za-z]+)([-+]?\d+(?::\d+)?)((?:<[^>]*>|[A-Za-z]+)([-+]?\d+(?::\d+)?)?)?(?:,(.*))?$/.exec(s||'');if(!m)return s;
+ const mn=t=>{const n=t.replace('+','').split(':');const v=Math.abs(+n[0])*60+(+(n[1]||0));return t[0]=='-'?v:-v};
+ const st=mn(m[2]),ds=m[3]?(m[4]?mn(m[4]):st+60):null;
+ const r=(m[5]||'').split(',').filter(x=>x).map(x=>x.includes('/')?x.replace(/\/(\d+)$/,'/$1:00'):x+'/2:00').join(',');
+ return st+'|'+ds+'|'+r}
+function autoTZ(){const p=posixTZ(),c=tzCanon(p),o=[...$('tz').options].find(o=>o.value!='auto'&&tzCanon(o.value)==c);return o?o.value:p}
+
+/* --- flight data --- */
+function dmShow(){$('key_box').style.display=$('dm1').checked?'block':'none';$('os_box').style.display=$('dm1').checked?'none':'block'}
+for(const id of ['dm0','dm1'])$(id).onchange=dmShow;
+function kpsShow(){const n=Math.round(2592000/+$('kps').value);$('kps_info').textContent='About '+n.toLocaleString('en-US')+' requests a month.'}
+$('kps').onchange=kpsShow;
+function keyState(s){if(!s.hk)return '';
+ if(s.dm!=1)return '<span class="mut">Saved key not in use.</span>';
+ if(s.kst==200)return '<span class="ok">The key works.</span>';
+ if(s.kst==401||s.kst==403)return '<span class="bad">The key was rejected – check the key and your subscription.</span>';
+ if(s.kst==429)return '<span class="warn">Your plan’s request limit was reached – choose a longer update interval.</span>';
+ return s.kst?'<span class="bad">The data service answered with error '+s.kst+'.</span>':'<span class="mut">Checking the key…</span>'}
+
+function rgShow(){const v=+$('rg').value;$('rg_v').textContent=v+' km'+(S.du==1?' ('+Math.round(v*0.621371)+' mi)':S.du==2?' ('+Math.round(v*0.539957)+' NM)':'')}
+
+function fill(s){
+ $('view').value=s.view;paneBox();$('font').value=s.font;$('rs').value=s.rs;$('rm').value=s.rm;$('spd').value=s.spd;$('c12').value=s.c12;
+ for(const id of ['du','au','vu','tu','pl','pr','ovh','csec','ms'])$(id).value=s[id];paneSync();secShow();$('rare').checked=!!s.rare;$('flap').checked=!!s.flap;
+ document.querySelectorAll('[data-cf]').forEach(c=>c.checked=(s.cf&+c.dataset.cf)!=0);fillCols(s);
+ $('bright').value=s.bright;$('bright').oninput();$('flip').checked=!!s.flip;
+ $('ns').value=toTime(s.ns);$('ne').value=toTime(s.ne);$('nb').value=s.nb||127;$('nb').oninput();
+ $('rg').value=s.range;rgShow();setPos(s.lat,s.lon,true);
+ $('tq').value=s.trk?s.trk.q:'';$('tl').value=s.tlb||'';for(const b of [1,2,4,8])$('ts'+b).checked=(s.tsh&b)!=0;
+ $('dm'+(s.dm==1?1:0)).checked=true;dmShow();$('kps').value=s.kps;kpsShow();
+  if(s.tza)$('tz').value='auto';else if([...$('tz').options].some(o=>o.value==s.tz))$('tz').value=s.tz;
+ else{const o=document.createElement('option');o.value=s.tz;o.textContent='Other time zone';$('tz').appendChild(o);$('tz').value=s.tz}
+ /* the device learns the time and the time zone from this page when it cannot do it by itself */
+ const d={};if(!s.tv)d.now=Math.floor(Date.now()/1000);
+ if(s.tza){const z=autoTZ();if(z!=s.tz){d.tz=z;d.tza=1}}
+ if(Object.keys(d).length)post('/api/settings',d).catch(()=>{});
+ if(!s.has_wifi){tab('wifi');scan()}
+}
+function renderTrack(t){
+ const b=$('t_box');if(!t){b.style.display='none';return}b.style.display='block';
+ let h=(S.tlb?'<div class="lbl">'+esc(S.tlb)+'</div>':'')+'<h3>'+esc(t.cs||t.q)+'</h3>';
+ if(t.st==1){b.innerHTML=h+'<div class="big mut">Searching…</div>';return}
+ if(t.st==4){b.innerHTML=h+'<div class="big warn">Not flying right now</div><small>AeroBox keeps checking and will show it as soon as it is airborne.</small>';return}
+ const sub=[t.ty,t.rg,t.al].filter(x=>x).map(esc).join(' · ');if(sub)h+='<small>'+sub+'</small>';
+ if(t.o)h+='<div style="margin-top:8px;font-size:17px">'+esc(t.o)+' → '+esc(t.de)+(t.city?' <small>· '+esc(t.city)+'</small>':'')+'</div>';
+ let st;
+ if(t.land)st='<span class="ok">Landed'+(t.de?' at '+esc(t.de):'')+'</span>';
+ else if(t.st==3)st='<span class="mut">No signal for '+Math.round(t.age/60)+' min</span>';
+ else if(t.gnd)st='<span class="mut">On the ground</span>';
+ else if(t.eta>=0)st=t.eta==0?'Landing now':'Lands in '+eta(t.eta)+' <small>· about '+hhmm(t.eta)+'</small>';
+ else st=t.near?'<span class="ok">Within your range</span>':dist(t.d)+' from you';
+ h+='<div class="big">'+st+'</div>';
+ h+='<small>'+alt(t.alt,t.gnd)+' · '+speed(t.gs)+' · '+dist(t.d)+' from home'+(t.rem>=0&&!t.land?' · '+dist(t.rem)+' to go':'')+'</small>';
+ if(t.o&&t.p>=0)h+='<div class="prog"><i style="width:'+Math.round(t.p*100)+'%"></i></div><div class="ends"><span>'+esc(t.o)+'</span><span>'+esc(t.de)+'</span></div>';
+ b.innerHTML=h;
+}
+function render(s){
+ if(S.view!==undefined&&S.view!==s.view){$('view').value=s.view;paneBox();secShow()}   /* changed by the button or by tracking */
+ S=s;
+ $('pill').innerHTML=s.wifi?'<span class="ok">●</span> '+esc(s.ssid):s.portal?'<span class="warn">●</span> '+esc(s.ap):'<span class="bad">●</span> Not connected';
+ $('b_safe').classList.toggle('on',!!s.safe);
+ $('b_disp').classList.toggle('on',!s.disp);$('b_setup').classList.toggle('on',!s.has_wifi);$('b_pow').classList.toggle('on',!!s.limited);
+ $('s_wifi').innerHTML=s.wifi?esc(s.ssid)+' <small>· '+(s.rssi>-60?'strong':s.rssi>-72?'fair':'weak')+'</small>':'<span class="bad">Not connected</span>';
+ $('led_box').style.display=s.disp?'block':'none';
+ $('s_data').innerHTML=s.dm==1&&(s.kst==401||s.kst==403)?'<span class="bad">API key rejected</span>':s.wait>0?'<span class="warn">Source busy</span> <small>'+s.wait+' s</small>':
+  s.data?'<span class="ok">Receiving</span> <small>'+s.age+' s ago</small>':s.wifi?'<span class="bad">Not receiving</span>':'<span class="mut">Waiting for Wi-Fi</span>';
+ $('s_n').textContent=s.n+' of '+s.seen;$('fwv').textContent=s.fw;updShow(s);
+ $('s_wx').innerHTML=s.wx?temp(s.wx.t)+' <small>'+esc(s.wx.txt.toLowerCase())+'</small>':'<span class="mut">–</span>';
+ let t='';s.ac.forEach(a=>{t+='<tr><td>'+(a.k?'<b>':'')+esc(a.c)+(a.k?'</b>':'')+(a.x&&s.rare?' <small class="sp">'+SPECIAL[a.x]+'</small>':'')+'</td><td>'+esc(a.t)+'</td><td>'+(esc(a.r)||'<span class="mut">no data</span>')+'</td><td>'+dist(a.d)+'</td><td>'+alt(a.a)+'</td><td>'+
+  (a.c?'<button class="s" data-c="'+esc(a.c)+'">Track</button>':'')+'</td></tr>'});
+ $('ac').innerHTML=t||'<tr><td colspan="6"><small>'+(s.data?'No aircraft in range.':'No data yet.')+'</small></td></tr>';
+ $('ac').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('tq').value=b.dataset.c;tab('trk');track()});
+ $('w_cur').innerHTML=s.wifi?'Connected to <b>'+esc(s.ssid)+'</b>, IP '+esc(s.ip)+' · <a style="color:var(--acc)" href="http://aerobox.local">aerobox.local</a>':
+  s.has_wifi?'Trying to connect to <b>'+esc(s.ssid)+'</b>…':'Wi-Fi is not set up yet.';
+ $('key_saved').textContent=s.hk?'saved key …'+s.k4:'';
+ msg('loc_auto',s.lsrc==1?'Found automatically from your internet connection. Check that the marker is on your home – if not, enter your coordinates.':'','warn');
+ if(document.activeElement!=$('srv'))$('srv').value=s.srv||'';$('srv_st').textContent=s.srv?(s.srvd?'not answering, using direct sources':s.srvk?'connected':'registering…'):'';
+ if(document.activeElement!=$('osid'))$('osid').value=s.osid||'';$('os_saved').textContent=s.oss?'secret saved':'';
+ {const t=!s.osid||s.dm?'':s.osst==200?['Extra flights are on.','ok']:s.osst==401?['OpenSky did not accept this client ID or secret.','bad']:s.osst==429?['OpenSky daily limit reached – extra flights pause until it resets.','bad']:s.osst?['OpenSky is not answering right now.','bad']:['Connecting to OpenSky…',''];msg('osst',t?t[0]:'',t?t[1]:'')}
+ $('kst').innerHTML=keyState(s);
+ renderTrack(s.trk);
+ const rows=[['Model','AeroBox'],['Firmware version',s.fw],['Wi-Fi network',s.wifi?s.ssid+' ('+(s.rssi>-60?'strong':s.rssi>-72?'fair':'weak')+' signal)':s.has_wifi?s.ssid+' (not connected)':'Not set up'],
+  ['IP address',s.ip||'–'],['Web address','http://aerobox.local'],['MAC address',s.mac],['Running for',fmtUp(s.up)]];
+ $('info').innerHTML=rows.map(r=>'<tr><td><small>'+r[0]+'</small></td><td>'+esc(r[1])+'</td></tr>').join('');
+ if(first){first=false;fill(s)}
+ wifiState(s);
+}
+function load(){api('/api/status').then(r=>r.json()).then(render).catch(()=>{$('pill').innerHTML='<span class="bad">●</span> No connection'})}
+
+/* --- tracking --- */
+function track(){const q=$('tq').value.trim().toUpperCase().replace(/\s+/g,'');if(!q)return msg('m_trk','Enter a flight.','bad');
+ const l=cleanLabel($('tl').value);$('tl').value=l;
+ post('/api/settings',{track:q,tlb:l}).then(j=>{msg('m_trk',j.ok?'Tracking '+esc(q)+'.':esc(j.err),j.ok?'ok':'bad');if(j.ok)load()}).catch(()=>msg('m_trk','Could not save.','bad'))}
+function untrack(){post('/api/settings',{track:''}).then(()=>{$('tq').value='';$('tl').value='';msg('m_trk','Stopped tracking.','ok');load()}).catch(()=>{})}
+
+/* --- map (only when the phone has internet) --- */
+function setPos(la,lo,move){$('coord').value=la.toFixed(5)+', '+lo.toFixed(5);if(!window.L)return;
+ if(!map){$('map').style.display='block';$('map_hint').textContent='Tap your home on the map or type the coordinates.';
+  map=L.map('map').setView([la,lo],10);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,referrerPolicy:'strict-origin-when-cross-origin',
+   attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
+  mk=L.marker([la,lo]).addTo(map);cir=L.circle([la,lo],{radius:$('rg').value*1000,color:'#f5b60a',weight:1}).addTo(map);
+  map.on('click',e=>setPos(e.latlng.lat,e.latlng.lng,false))}
+ mk.setLatLng([la,lo]);cir.setLatLng([la,lo]);cir.setRadius($('rg').value*1000);if(move)map.setView([la,lo])}
+$('rg').oninput=()=>{rgShow();if(cir)cir.setRadius($('rg').value*1000)};
+$('coord').onchange=()=>{const p=$('coord').value.replace(';',',').split(',');if(p.length==2&&!isNaN(+p[0])&&!isNaN(+p[1]))setPos(+p[0],+p[1],true)};
+(function(){const l=document.createElement('link');l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l);
+ const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=()=>{if(S.lat!==undefined)setPos(S.lat,S.lon,true)};document.head.appendChild(s)})();
+
+/* --- saving --- */
+function saveDisp(){const ns=toMin($('ns').value),ne=toMin($('ne').value);if(ns===null||ne===null)return msg('m_disp','Enter both night times.','bad');
+ post('/api/settings',{view:$('view').value,pl:$('pl').value,pr:$('pr').value,font:$('font').value,rs:$('rs').value,rm:$('rm').value,du:$('du').value,au:$('au').value,vu:$('vu').value,tu:$('tu').value,spd:$('spd').value,c12:$('c12').value,cf:cfVal(),csec:$('csec').value,ms:$('ms').value,ovh:$('ovh').value,rare:$('rare').checked?1:0,flap:$('flap').checked?1:0,bright:$('bright').value,flip:$('flip').checked?1:0,ns:ns,ne:ne,nb:nbVal()})
+ .then(j=>msg('m_disp',j.ok?'Saved.':esc(j.err),j.ok?'ok':'bad')).catch(()=>msg('m_disp','Could not save.','bad'))}
+function saveLoc(){const p=$('coord').value.replace(';',',').split(',');
+ post('/api/settings',{lat:(p[0]||'').trim(),lon:(p[1]||'').trim(),range:$('rg').value})
+ .then(j=>msg('m_loc',j.ok?'Saved. Aircraft at the new location will appear in about 15 s.':esc(j.err),j.ok?'ok':'bad')).catch(()=>msg('m_loc','Could not save.','bad'))}
+function saveSys(){const own=$('dm1').checked,k=$('key').value.trim();
+ if(own&&!k&&!S.hk)return msg('m_sys','Enter your API key.','bad');
+ const d={dm:own?1:0,kps:$('kps').value};if(k)d.key=k;
+ if(!own){d.srv=$('srv').value.trim();const oi=$('osid').value.trim(),osc=$('ossec').value.trim();d.osid=oi;if(osc)d.ossec=osc;
+  if(oi&&!osc&&!S.oss)return msg('m_sys','Enter the OpenSky client secret.','bad')}
+ if($('tz').value=='auto'){d.tza=1;d.tz=autoTZ()}else{d.tza=0;d.tz=$('tz').value}
+ post('/api/settings',d).then(j=>{if(!j.ok)return msg('m_sys',esc(j.err),'bad');$('key').value='';$('ossec').value='';msg('m_sys','Saved.','ok');load()})
+ .catch(()=>msg('m_sys','Could not save.','bad'))}
+
+/* --- Wi-Fi --- */
+function scan(){$('b_scan').disabled=true;$('nets').innerHTML='<small>Searching for networks…</small>';
+ api('/api/scan').then(r=>r.json()).then(a=>{$('b_scan').disabled=false;const l=$('nets');l.innerHTML='';
+  if(!a.length){l.innerHTML='<small>No networks found – type the name instead.</small>';return}
+  a.forEach(n=>{const d=document.createElement('div');d.className='net';d.tabIndex=0;d.setAttribute('role','button');d.innerHTML='<span></span><small></small>';
+   d.firstChild.textContent=n.s;d.lastChild.textContent=(n.r>-60?'strong':n.r>-75?'fair':'weak')+(n.l?' · 🔒':'');
+   d.onclick=()=>{document.querySelectorAll('.net').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');$('ssid').value=n.s;$('pass').focus()};
+   d.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();d.onclick()}};l.appendChild(d)})})
+ .catch(()=>{$('b_scan').disabled=false;$('nets').innerHTML='<small class="bad">Search failed.</small>'})}
+function joinWifi(){const ssid=$('ssid').value.trim();if(!ssid)return msg('m_wifi','Enter the network name.','bad');
+ $('b_join').disabled=true;msg('m_wifi','Connecting to '+esc(ssid)+'… This takes up to 30 s. '+(S.portal?'The connection to AeroBox may drop for a moment.':
+  'This page may stop responding for a moment. If it works, AeroBox moves to the new network (open aerobox.local there); if not, it returns to the current network.'),'warn');
+ post('/api/wifi',{ssid:ssid,pass:$('pass').value}).then(j=>{if(!j.ok){$('b_join').disabled=false;msg('m_wifi',esc(j.err),'bad')}}).catch(()=>{});
+ S.wst=1;clearInterval(wPoll);wPoll=setInterval(load,1500)}
+function wifiState(s){if(!wPoll)return;
+ if(s.wst==2){clearInterval(wPoll);wPoll=null;msg('m_wifi','<b>Connected!</b> Go back to your Wi-Fi and open <b>http://aerobox.local</b>'+(s.ip?' or <b>http://'+esc(s.ip)+'</b>':'')+'.','ok')}
+ else if(s.wst==3){clearInterval(wPoll);wPoll=null;$('b_join').disabled=false;msg('m_wifi',esc(s.wmsg),'bad')}}
+function forgetWifi(){if(!confirm('Forget Wi-Fi? AeroBox will restart and open its own network for setup.'))return;
+ post('/api/wifi-reset').then(()=>msg('m_wifi','Connect your phone to the AeroBox network. The password is shown on the display.','ok')).catch(()=>{})}
+
+/* --- system --- */
+function restart(){if(!confirm('Restart AeroBox?'))return;post('/api/restart').catch(()=>{});setTimeout(()=>location.reload(),8000)}
+function factory(){if(!confirm('Erase ALL settings, including Wi-Fi?'))return;post('/api/factory-reset').catch(()=>{});
+ msg('m_ota','Settings erased. Connect to the AeroBox network. The password is shown on the display.','ok')}
+let updReload=false;
+function updLaterGet(){try{return localStorage.getItem('updLater')||''}catch(e){return ''}}
+function updLater(){try{localStorage.setItem('updLater',S.upd||'')}catch(e){}$('b_upd').classList.remove('on')}
+/* Visos svetaines virsuje: nauja versija (Later - paslepia iki kitos versijos), diegimo eiga, klaida */
+function updBanner(s){const busy=s.upds==1||s.upds==2,show=busy||s.upds==-1||(!!s.upd&&updLaterGet()!=s.upd);
+ $('b_upd').classList.toggle('on',show);if(!show)return;
+ $('b_upd_t').innerHTML=s.upds==1?'<b>Installing firmware '+esc(s.upd)+'…</b> '+s.updp+'% <small>– do not unplug AeroBox.</small>':
+  s.upds==2?'<b>Firmware '+esc(s.upd)+' installed.</b> AeroBox is restarting…':
+  s.upds==-1?'<b>Update failed:</b> '+esc(s.upde||'unknown error')+(s.upd?' You can try again.':''):
+  '<b>New firmware '+esc(s.upd)+' is available</b> <small>(you have '+esc(s.fw)+')</small>'+(s.updn?'<br>'+esc(s.updn):'');
+ $('b_upd_bar').style.display=busy?'block':'none';$('b_upd_bar').firstChild.style.width=(s.upds==2?100:s.updp)+'%';
+ $('b_upd_bb').style.display=busy?'none':'flex';$('b_upd_go').textContent=s.upds==-1?'Try again':'Update now';
+ $('b_upd_go').style.display=s.upd?'':'none'}
+function updShow(s){updBanner(s);const on=!!s.upd||s.upds!=0;$('upd_box').style.display=on?'block':'none';if(!on)return;
+ $('upd_t').innerHTML='<b>New firmware '+esc(s.upd)+' is available</b> (installed '+esc(s.fw)+').'+(s.updn?'<br>'+esc(s.updn):'')+
+  '<br><small>Press Update to install it. Your settings are kept. AeroBox restarts by itself.</small>';
+ const busy=s.upds==1||s.upds==2;$('b_upd').disabled=busy;$('upd_bar').style.display=busy?'block':'none';
+ $('upd_bar').firstChild.style.width=(s.upds==2?100:s.updp)+'%';
+ if(s.upds==1)msg('m_upd','Downloading and installing… '+s.updp+'%','');
+ else if(s.upds==2){msg('m_upd','Installed! AeroBox is restarting…','ok');if(!updReload){updReload=true;setTimeout(()=>location.reload(),15000)}}
+ else if(s.upds==-1)msg('m_upd',esc(s.upde||'Update failed'),'bad')}
+function upd(){$('b_upd').disabled=true;$('b_upd_go').disabled=true;setTimeout(()=>$('b_upd_go').disabled=false,5000);msg('m_upd','Starting…','');
+ api('/api/update',{method:'POST'}).then(r=>r.json()).then(j=>{if(!j.ok){$('b_upd').disabled=false;msg('m_upd',esc(j.err||'Update failed'),'bad')}
+  else{clearInterval(wPoll);wPoll=setInterval(load,1000)}}).catch(()=>{$('b_upd').disabled=false;msg('m_upd','No connection','bad')})}
+function ota(){const f=$('fw').files[0];if(!f)return msg('m_ota','Choose the firmware.bin file.','bad');
+ if(!confirm('Upload '+f.name+' ('+Math.round(f.size/1024)+' KB)?'))return;
+ const x=new XMLHttpRequest();$('b_ota').disabled=true;$('ota_bar').style.display='block';
+ x.upload.onprogress=e=>{if(e.lengthComputable)$('ota_bar').firstChild.style.width=(e.loaded*100/e.total)+'%'};
+ x.onload=()=>{let j={};try{j=JSON.parse(x.responseText)}catch(e){}
+  if(j.ok){msg('m_ota','Uploaded! AeroBox is restarting with the new firmware…','ok');setTimeout(()=>location.reload(),12000)}
+  else{$('b_ota').disabled=false;msg('m_ota',esc(j.err||'Upload failed'),'bad')}};
+ x.onerror=()=>{$('b_ota').disabled=false;msg('m_ota','Connection lost during upload','bad')};
+ x.open('POST','/api/ota');x.setRequestHeader('Content-Type','application/octet-stream');x.setRequestHeader('X-AeroBox','1');x.send(f)}
+
+/* --- live display preview --- */
+let ledBusy=false;
+function drawLed(buf){const w=S.w,h=S.h;if(!w||buf.byteLength<w*h*2)return;
+ const c=$('led'),dpr=window.devicePixelRatio||1,cw=c.clientWidth,p=cw/w;
+ c.width=Math.round(cw*dpr);c.height=Math.round(p*h*dpr);const x=c.getContext('2d');x.scale(dpr,dpr);
+ x.fillStyle='#050506';x.fillRect(0,0,cw,p*h);const px=new Uint16Array(buf),r=p*0.42;
+ for(let y=0;y<h;y++)for(let i=0;i<w;i++){const v=px[y*w+i];
+  x.fillStyle=v?'rgb('+((v>>11)<<3)+','+(((v>>5)&63)<<2)+','+((v&31)<<3)+')':'#17171c';
+  x.beginPath();x.arc(i*p+p/2,y*p+p/2,v?r:r*0.55,0,6.2832);x.fill()}}
+function pollLed(){if(ledBusy||document.hidden||!$('st').classList.contains('on')||!S.disp)return;ledBusy=true;
+ api('/api/frame').then(r=>r.ok?r.arrayBuffer():null).then(b=>{ledBusy=false;if(b)drawLed(b)}).catch(()=>{ledBusy=false})}
+setInterval(pollLed,1000);
+
+load();setInterval(()=>{if(!wPoll)load()},4000);
+</script>
+</body>
+</html>

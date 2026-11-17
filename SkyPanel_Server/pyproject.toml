@@ -1,0 +1,14 @@
+[project]
+name = "aerobox-server"
+version = "1.1"
+description = "AeroBox ekranu serveris: lektuvu duomenys, registracija, programos atnaujinimai"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "maxminddb>=2.6",
+    "psutil>=5.9",
+]

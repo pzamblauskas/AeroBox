@@ -1,0 +1,135 @@
+# AeroBox serveris. Instrukcija – README.md.
+#
+#   internetas → caddy (HTTPS, 80/443) → api (N kopijų) → core (vienas; renka lėktuvų duomenis)
+#                                                        → db (PostgreSQL; iš išorės nepasiekiama)
+#   backup – kasdienė duomenų bazės kopija į ./backups
+#
+# Visi nustatymai – .env faile. Daugiau galios: .env faile API_REPLICAS=4, tada `docker compose up -d`.
+x-app: &app
+  build: .
+  image: aerobox-server:latest
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 512
+  logging: &logging
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+  depends_on:
+    db: { condition: service_healthy }
+
+x-env: &env
+  DATABASE_URL: postgresql+psycopg://aerobox:${DB_PASSWORD:?truksta DB_PASSWORD (.env)}@db:5432/aerobox
+  ADMIN_TOKEN: ${ADMIN_TOKEN:?truksta ADMIN_TOKEN (.env)}
+  ADMIN_ALLOW_IPS: ${ADMIN_ALLOW_IPS:-}
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:?truksta INTERNAL_TOKEN (.env)}
+  CORE_URL: http://core:8081
+  PROVIDER: ${PROVIDER:-free}
+  UPSTREAMS: ${UPSTREAMS:-fi,lol}
+  PROVIDER_URL: ${PROVIDER_URL:-}
+  PROVIDER_KEY: ${PROVIDER_KEY:-}
+  PROVIDER_KEY_HEADER: ${PROVIDER_KEY_HEADER:-api-auth}
+  PROVIDER_HEX_PATH: ${PROVIDER_HEX_PATH:-icao}
+  PROVIDER_WORLD_URL: ${PROVIDER_WORLD_URL:-}
+  PROVIDER_SPACING: ${PROVIDER_SPACING:-0.25}
+  WEATHER_URL: ${WEATHER_URL:-https://api.open-meteo.com/v1/forecast}
+  WEATHER_KEY: ${WEATHER_KEY:-}
+  MAX_ZONES: ${MAX_ZONES:-600}
+  MAX_WATCH: ${MAX_WATCH:-200}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      DOMAIN: ${DOMAIN:?truksta DOMAIN (.env)}
+      ACME_EMAIL: ${ACME_EMAIL:?truksta ACME_EMAIL (.env)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [edge]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    depends_on: [api]
+
+  api:
+    <<: *app
+    environment:
+      <<: *env
+      ROLE: api
+      PORT: "8080"
+      FORWARDED_ALLOW_IPS: 172.30.0.0/24       # X-Forwarded-For priimamas tik iš Caddy tinklo
+    volumes:
+      - firmware:/data/firmware
+      - ./geoip:/data/geoip:ro
+    networks: [edge, backend]
+    mem_limit: 512m
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+
+  core:
+    <<: *app
+    environment:
+      <<: *env
+      ROLE: core
+      PORT: "8081"
+    networks: [backend]
+    mem_limit: 1g
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aerobox
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: aerobox
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks: [backend]                        # prievadas į išorę neatidarytas
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aerobox -d aerobox"]
+      interval: 5s
+      retries: 12
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
+    shm_size: 256m
+
+  backup:                                      # kasdienė duomenų bazės kopija, saugoma 14 dienų (./backups)
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    networks: [backend]
+    depends_on:
+      db: { condition: service_healthy }
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        while true; do
+          f=/backups/aerobox-$$(date +%Y%m%d-%H%M).sql.gz
+          if pg_dump -h db -U aerobox aerobox | gzip > $$f.tmp && [ -s $$f.tmp ]; then mv $$f.tmp $$f; echo "kopija: $$f";
+          else rm -f $$f.tmp; echo "KOPIJA NEPAVYKO"; fi
+          find /backups -name 'aerobox-*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+    logging: *logging
+
+networks:
+  edge:
+    ipam:
+      config: [{ subnet: 172.30.0.0/24 }]
+  backend:
+
+volumes:
+  dbdata:
+  firmware:
+  caddy_data:
+  caddy_config:

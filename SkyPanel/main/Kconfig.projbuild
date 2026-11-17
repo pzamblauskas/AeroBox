@@ -1,0 +1,74 @@
+menu "AeroBox"
+
+    config SKY_WIFI_SSID
+        string "Wi-Fi tinklo pavadinimas (tik 2,4 GHz)"
+        default ""
+
+    config SKY_WIFI_PASS
+        string "Wi-Fi slaptažodis"
+        default ""
+
+    config SKY_HOME_LAT
+        string "Namų platuma (laipsniais)"
+        default "54.6900"
+
+    config SKY_HOME_LON
+        string "Namų ilguma (laipsniais)"
+        default "25.2800"
+
+    config SKY_RANGE_KM
+        int "Radaro spindulys, km"
+        range 5 100
+        default 20
+
+    config SKY_POLL_MS
+        int "Numatytasis adsb.lol užklausų periodas, ms (keičiamas valdymo puslapyje)"
+        range 2000 60000
+        default 5000
+
+    config SKY_ROUTE_LOOKUP
+        bool "Ieškoti maršruto (iš kur – į kur, oro uostai, aviakompanija) per adsbdb.com"
+        default y
+
+    config SKY_TZ
+        string "Laiko juosta (POSIX TZ)"
+        default "EET-2EEST,M3.5.0/3,M10.5.0/4"
+
+    config SKY_BRIGHTNESS
+        int "Numatytasis ryškumas (128–255; puslapyje 0–100 %)"
+        range 128 255
+        default 191
+
+    config SKY_NIGHT_START_H
+        int "Nakties režimo pradžia (valanda)"
+        range 0 23
+        default 23
+
+    config SKY_NIGHT_END_H
+        int "Nakties režimo pabaiga (valanda); lygi pradžiai – režimas išjungtas"
+        range 0 23
+        default 7
+
+    config SKY_NIGHT_BRIGHTNESS
+        int "Ryškumas naktį (128–255; puslapyje 0–100 %)"
+        range 128 255
+        default 128
+
+    config SKY_PANEL_LAYOUT
+        int "Numatytasis panelių išdėstymas (0 – 1x 64x32, 1 – 4x 64x32 = 128x64, 2 – 4x eilutėmis, 3 – 1x 128x64)"
+        range 0 4
+        default 1
+
+    config SKY_PSU_AMPS
+        int "Panelių maitinimo bloko srovė, A (0 – neriboti)"
+        range 0 40
+        default 4
+
+    config SKY_FLIGHTWALL
+        bool "FlightWall stiliaus skrydžio kortelė su aviakompanijos logotipu (atskiras variantas)"
+        default n
+        help
+            Kortelė kaip FlightWall: logotipas 32x32, aviakompanija, maršrutas, tipas; apačioje – iš kur ir į kur,
+            aukštis, greitis. Kompiliuojama aplinka esp32-s3-n16r8-fw (platformio.ini, sdkconfig.esp32-s3-n16r8-fw).
+
+endmenu

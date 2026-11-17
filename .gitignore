@@ -1,0 +1,27 @@
+# Kompiliavimo rezultatai – atsiranda patys kompiliuojant
+.pio/
+build/
+managed_components/
+*.log
+sdkconfig.old
+**/components/net/www/index.html.gz
+
+# Sukompiliuoti ekrano programos failai (įkėlimo aplanke)
+Uploadinimas/bin/
+
+# Python
+__pycache__/
+.venv/
+
+# Serverio slaptažodžiai ir duomenys – NIEKADA į git
+.env
+backups/
+geoip/
+*.db
+
+# Sistema ir redaktoriai
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store
