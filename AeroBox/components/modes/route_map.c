@@ -590,35 +590,6 @@ void map_draw_in(gfx_t *g, int x0, int y0, int w, int h, const aircraft_t *a, co
     gfx_clip_off();
 }
 
-void map_draw_world(gfx_t *g, int x0, int y0, int w, int h)
-{
-    const home_t *hm = aircraft_table_home();
-    if (w > MAP_W) w = MAP_W;
-    if (h > MAP_H) h = MAP_H;
-    s_x0 = x0, s_y0 = y0;
-    view_key_t key;
-    memset(&key, 0, sizeof key);
-    key.w = w, key.h = h, key.n = -1, key.home_lat = hm->lat, key.home_lon = hm->lon;
-    if (!view_same(&key)) {
-        view_new(&key);
-        /* 360 laipsnių per plotį, namai horizontaliai viduryje; vertikalus centras – 25° Š, kad matytųsi visi žemynai */
-        s_lon0 = hm->lon, s_lat0 = 25.0f;
-        for (int i = 0; i < 2; i++) {
-            s_cosk = cosf(s_lat0 * DEG2RAD);
-            s_ppd = (float)w / 360.0f / s_cosk;
-            clamp_view();
-        }
-        s_ppd = (float)w / 360.0f / s_cosk;
-        view_ready();
-    }
-    gfx_clip(x0, y0, w, h);
-    draw_land(g);
-    float hx, hy;
-    to_px(hm->lon, hm->lat, &hx, &hy);
-    draw_home(g, hx, hy);
-    gfx_clip_off();
-}
-
 void map_draw(gfx_t *g, const aircraft_t *a, const route_t *r)
 {
     map_draw_in(g, 0, 0, g->w, g->h, a, r, -1);

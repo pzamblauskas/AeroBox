@@ -29,12 +29,13 @@ static esp_netif_t       *s_ap_netif;
 static int                s_attempt;
 static volatile bool      s_sta_enabled, s_portal, s_testing;
 
-/* Pakartotinio prisijungimo atidėjimas: 1, 2, 4 … 64 s ir atsitiktinis priedas (jitter) */
+/* Pakartotinio prisijungimo atidėjimas: 1, 2, 4 … 32 s ir atsitiktinis priedas (jitter) – kad įjungtas tinklas
+ * (pvz., telefono „hotspot“) būtų rastas greitai */
 static void net_wifi_portal_client_joined(void);
 
 static uint32_t backoff_ms(int attempt)
 {
-    uint32_t base = 1000u << (attempt < 6 ? attempt : 6);
+    uint32_t base = 1000u << (attempt < 5 ? attempt : 5);
     return base / 2 + esp_random() % base;
 }
 
@@ -107,6 +108,9 @@ void net_init(const char *tz)
     wifi_init_config_t icfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&icfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));   /* nustatymai saugomi mūsų pačių NVS srityje (settings.c) */
+    /* Numatytoji šalis „01“ leidžia tik 1–11 kanalus, todėl Europoje dažni 12 ir 13 kanalų tinklai nebūtų randami.
+     * ES – 1–13 kanalai; prisijungus taikomos maršrutizatoriaus šalies taisyklės (802.11d) */
+    esp_wifi_set_country_code("LT", true);
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, on_event, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, on_event, NULL));
 
@@ -120,8 +124,9 @@ void net_init(const char *tz)
 static void sta_config(wifi_config_t *wc, const char *ssid, const char *pass)
 {
     memset(wc, 0, sizeof *wc);
-    strlcpy((char *)wc->sta.ssid, ssid, sizeof wc->sta.ssid);
-    strlcpy((char *)wc->sta.password, pass, sizeof wc->sta.password);
+    /* Laukai be baigiamojo nulio: 32 baitų vardas ir 64 simbolių (šešioliktainis) slaptažodis telpa visi */
+    memcpy(wc->sta.ssid, ssid, strnlen(ssid, sizeof wc->sta.ssid));
+    memcpy(wc->sta.password, pass, strnlen(pass, sizeof wc->sta.password));
     wc->sta.threshold.authmode = pass[0] ? WIFI_AUTH_WPA_PSK : WIFI_AUTH_OPEN;  /* WPA, WPA2, WPA3 */
     wc->sta.sae_pwe_h2e = WPA3_SAE_PWE_BOTH;                                     /* WPA3 */
     wc->sta.scan_method = WIFI_ALL_CHANNEL_SCAN;          /* jei keli prieigos taškai turi tą patį vardą, */

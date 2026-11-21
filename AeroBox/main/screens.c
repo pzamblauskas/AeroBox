@@ -1,4 +1,4 @@
-/* Sisteminiai ekranai: paleidimas, Wi-Fi nustatymai, trumpi pranešimai ir pasisveikinimas po Wi-Fi nustatymo.
+/* Sisteminiai ekranai: paleidimas, Wi-Fi nustatymai, trumpi pranešimai ir prašymas pasirinkti vietą.
  * Visi ekrane rodomi tekstai yra čia, šiame faile. */
 #include "screens.h"
 #include "app_status.h"
@@ -151,20 +151,21 @@ void screen_portal(gfx_t *g, uint32_t ms)
 }
 
 
-/* Pasisveikinimas po Wi-Fi nustatymo: pasaulio žemėlapis, o viršuje – valdymo puslapio adresas namų tinkle.
- * Rodomas, kol puslapis atidaromas (webui.c) arba paspaudžiamas mygtukas (app_main.c). */
-void screen_welcome(gfx_t *g, const char *ip)
+/* Vieta dar nepasirinkta (Wi-Fi jau veikia): virš įprasto, patamsinto vaizdo – juosta su užrašu
+ * „CHOOSE YOUR LOCATION“ ir valdymo puslapio adresu (jei įrenginys neatpažįsta aerobox.local).
+ * Rodoma be pertraukos, kol puslapyje išsaugoma namų vieta (app_main.c). */
+void screen_choose_location(gfx_t *g, const char *ip)
 {
-    mode_win(WIN_MAP);
-    map_draw_world(g, 0, 0, g->w, g->h);
-    mode_win(WIN_CARD);
-    if (!ip) return;
-    /* Adresas reikalingas, jei naudotojo įrenginys neatpažįsta aerobox.local */
-    char t[24];
-    const bool big = g->w >= 128;
-    snprintf(t, sizeof t, big ? "OPEN %s" : "%s", ip);
-    const int h = big ? 11 : 8;
-    gfx_fill_rect(g, 0, 0, g->w, h, C_BLACK);
-    gfx_hline(g, 0, h, g->w, C_ACCENT_DIM);
-    gfx_text_center_fit(g, big ? 2 : 1, t, C_AMBER, 1);
+    for (size_t i = 0, n = (size_t)g->w * g->h; i < n; i++)
+        if (g->buf[i]) g->buf[i] = gfx_scale(g->buf[i], 40);
+    const char *ask = gfx_text_width("CHOOSE YOUR LOCATION") + 4 <= g->w ? "CHOOSE YOUR LOCATION" : "SET LOCATION";
+    const int sc = (g->w >= 128 && gfx_text_width_s(ip, 2) + 8 <= g->w) ? 2 : 1;   /* adresas – dvigubas, jei telpa */
+    const int fh = gfx_font_h(), pad = sc == 2 ? 3 : 2, gap = sc == 2 ? 4 : 2;
+    const int h = pad + fh + gap + fh * sc + pad;
+    const int y = (g->h - h) / 2;
+    gfx_fill_rect(g, 0, y - 1, g->w, h + 2, C_BLACK);
+    gfx_hline(g, 0, y - 1, g->w, C_ACCENT_DIM);
+    gfx_hline(g, 0, y + h, g->w, C_ACCENT_DIM);
+    gfx_text_center_fit(g, y + pad, ask, C_AMBER, 1);
+    gfx_text_center_fit(g, y + pad + fh + gap, ip, C_WHITE, sc);
 }

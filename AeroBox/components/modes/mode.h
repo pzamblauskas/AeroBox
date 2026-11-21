@@ -177,8 +177,6 @@ void map_draw(gfx_t *g, const aircraft_t *a, const route_t *r);
 #define MAP_ROUTES   5         /* kelių lėktuvų žemėlapyje – iki tiek (artimiausi; 4 – kaip radaro sąraše) */
 #define MAP_NO_ROUTE "NO DATA" /* maršrutas nežinomas – rodoma žemėlapio viršuje šalia skrydžio */
 void map_draw_in(gfx_t *g, int x0, int y0, int w, int h, const aircraft_t *a, const route_t *r, int pulse);
-/* Visas pasaulis per visą plotį (namai – viduryje, pažymėti) */
-void map_draw_world(gfx_t *g, int x0, int y0, int w, int h);
 /* Keli lėktuvai ir jų maršrutai (r[i] – NULL, jei nežinomas) savomis spalvomis col[i]; hi – išskirtasis (ryškus,
  * su oro uostų kodais ir žiedu; -1 – nėra) */
 void map_draw_multi(gfx_t *g, int x0, int y0, int w, int h, const aircraft_t *const *ac, const route_t *const *r,

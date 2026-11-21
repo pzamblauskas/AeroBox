@@ -1,6 +1,6 @@
 # AeroBox – programos įkėlimas
 
-Programos versija: **1.2.4** · Plokštė: **ESP32-S3-N16R8** · Ekranas: 4 × P2.5 64×32 HUB75 (128×64)
+Programos versija: **1.2.5** · Plokštė: **ESP32-S3-N16R8** · Ekranas: 4 × P2.5 64×32 HUB75 (128×64)
 
 ## Kas yra šiame aplanke
 
@@ -14,7 +14,7 @@ Programos versija: **1.2.4** · Plokštė: **ESP32-S3-N16R8** · Ekranas: 4 × P
 | `bin\firmware_merged.bin` | Viskas viename faile, rašoma adresu **0x0** (naršyklės būdui ir gamybai). Ištrina nustatymus. |
 | `bin\bootloader.bin`, `partitions.bin`, `ota_data_initial.bin` | Atskiros dalys, kurias naudoja `1_ikelti.bat`. |
 
-`bin\` failai į GitHub nekeliami: juos sukuria `4_kompiliuoti_is_kodo_ir_ikelti.bat`.
+`bin\` failai yra saugykloje (naujausia versija, paruošti įkelti); juos atnaujina `4_kompiliuoti_is_kodo_ir_ikelti.bat`.
 
 Skriptams reikia **uv** arba Python su `pip install esptool`. uv įdiegiamas taip:
 `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`.
@@ -22,6 +22,26 @@ Skriptams reikia **uv** arba Python su `pip install esptool`. uv įdiegiamas tai
 > **Ekranams su 1.2.3 ar senesne programa:** nuo 1.2.4 pasikeitė vidinis programos vardas (`skypanel` → `aerobox`),
 > todėl senesnė programa naujos per puslapį ar serverį nepriims. Vieną kartą įkelkite ją laidu
 > (`1_ikelti.bat`). Nustatymai išliks – nauja programa juos perkels pati. Vėliau atnaujinimai vėl veikia be laido.
+
+## Kas pakeista – 1.2.5 (2026-11-21)
+
+Wi-Fi nustatymas – kad pirmą kartą įjungtą dėžutę galėtų prijungti bet kas, su bet kokiu tinklu:
+
+- Tinklo vardai ir slaptažodžiai su lietuviškomis raidėmis, tarpais ir simboliais (`@ # ! & %`) priimami teisingai
+  (anksčiau ilgesni buvo laikomi tuščiais: „Choose a Wi-Fi network“ arba „Wrong password“).
+- Randami tinklai 12 ir 13 kanaluose (Europoje dažni; anksčiau – „Network not found“).
+- 32 simbolių tinklo vardas ir 64 simbolių slaptažodis nebenukerpami.
+- Iš sąrašo pasirinktas tinklas siunčiamas tiksliai (ir su tarpais pradžioje ar gale).
+- Nustatymų tinkle puslapis, atidarytas kitu adresu nei `192.168.4.1`, nukreipiamas į jį (anksčiau „Connect“ tyliai neveikė).
+- Puslapis nebestringa ties „Connecting…“: po 12 s be atsakymo parodomas pranešimas.
+- Naujas mygtukas **Save without testing**: tinklas išsaugomas nebandžius (pvz., to paties telefono „hotspot“);
+  dėžutė prisijungia, kai tik tinklas atsiranda.
+- Daugiau tinklo ryšių (16 vietoj 10) – puslapis atsidaro patikimiau.
+
+Namų vieta:
+
+- Vieta pagal IP adresą nebenustatoma. Kol vieta neišsaugota puslapio skiltyje **Location**, ekrane nuolat rodoma
+  juosta **CHOOSE YOUR LOCATION** su valdymo puslapio adresu.
 
 ## Programos įkėlimas
 
@@ -72,8 +92,11 @@ Kelyje neturi būti tarpų – žr. pagrindinį `README.md` (aplankas prijungiam
    Valdymo puslapis atsidaro pats; jei ne – naršyklėje įveskite **http://192.168.4.1**.
 3. Skiltyje **Wi-Fi** pasirinkite namų tinklą (tik 2,4 GHz), įveskite slaptažodį → **Connect**.
    AeroBox pirmiausia išbando ryšį ir išsaugo tinklą tik pavykus; nepavykus parodo priežastį.
-4. Ekrane pasirodo pasaulio žemėlapis su užrašu **OPEN** ir IP adresu. Grįžkite į namų Wi-Fi ir atidarykite
-   **http://aerobox.local** (jei neveikia – tą IP adresą). Užrašas dingsta, kai puslapis atidaromas.
+   Jei tinklo dabar nėra (pvz., to paties telefono „hotspot“) – **Save without testing**: AeroBox prisijungs,
+   kai tik tinklas atsiras.
+4. Ekrane – įprastas vaizdas su juosta **CHOOSE YOUR LOCATION** ir IP adresu. Grįžkite į namų Wi-Fi ir atidarykite
+   tą adresą (pvz., **http://192.168.0.105**; dažnai veikia ir **http://aerobox.local**).
+5. Skiltyje **Location** įveskite namų koordinates → **Save location**. Juosta dingsta.
 
 Valdymo puslapio skiltys:
 

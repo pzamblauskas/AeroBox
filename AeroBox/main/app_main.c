@@ -291,9 +291,6 @@ static void render_task(void *arg)
             char t[24];
             snprintf(t, sizeof t, g_status.upd_state == 2 ? "RESTARTING" : "UPDATING %u%%", (unsigned)g_status.upd_pct);
             screen_overlay(&s_gfx, t);
-        } else if (g_settings.welcome && g_status.wifi && g_status.ip[0]) {
-            scene = 20;                          /* ką tik nustatytas Wi-Fi: pasaulio žemėlapis ir valdymo puslapio adresas */
-            screen_welcome(&s_gfx, g_status.ip);
         } else {
             scene = 30;                          /* įprastas darbas: aktyvus režimas */
             aircraft_table_snapshot(&snap);      /* trumpam užrakina lentelę ir ją nukopijuoja */
@@ -304,6 +301,9 @@ static void render_task(void *arg)
         if (!s_booting) {
             if ((int32_t)(s_overlay_until - ms) > 0) screen_overlay(&s_gfx, s_overlay_text);
             else if (no_wifi_now(ms)) screen_overlay_alert(&s_gfx, "NO WI-FI");
+            /* Namų vieta dar nepasirinkta – kol ji neišsaugota puslapyje, ant vaizdo nuolat rodomas prašymas ir adresas */
+            else if (scene == 30 && g_settings.loc_src != LOC_USER && g_status.wifi && g_status.ip[0])
+                screen_choose_location(&s_gfx, g_status.ip);
         }
         fade_scene(&s_gfx, scene, ms);
         /* Peržiūros kadras – tik kai puslapis jo prašė per paskutines 3 s, ne dažniau kaip kas 250 ms */
@@ -353,10 +353,6 @@ static void on_button(button_event_t ev)
         s_wake_until = sky_now_ms() + WAKE_MS;
         s_bright_req = SETTINGS_BRIGHT_MIN;
         if (ev == BTN_SHORT) return;
-    }
-    if ((ev == BTN_SHORT || ev == BTN_LONG) && g_settings.welcome && g_status.wifi) {
-        settings_welcome_done();                 /* mygtukas uždaro po Wi-Fi nustatymo rodomą žemėlapį su adresu */
-        return;
     }
     if (ev == BTN_SHORT) {
         view_t v = (view_t)((mode_manager_view() + 1) % VIEW_COUNT);
@@ -413,8 +409,8 @@ static void system_task(void *arg)
             }
 
             /* Pirmą kartą prisijungus 8 s rodomas IP adresas (valdymo puslapiui, jei aerobox.local neveikia).
-             * Po Wi-Fi nustatymo adresas rodomas kitur (screen_portal ir screen_welcome), todėl čia praleidžiamas. */
-            if (g_status.portal_state == PORTAL_OK || g_settings.welcome) ip_shown = true;
+             * Kol vieta nepasirinkta, adresas ir taip rodomas (screen_choose_location), todėl čia praleidžiamas. */
+            if (g_status.portal_state == PORTAL_OK || g_settings.loc_src != LOC_USER) ip_shown = true;
             if (g_status.wifi && !ip_shown && g_status.ip[0]) {
                 ip_shown = true;
                 show_overlay_for(g_status.ip, 8000);

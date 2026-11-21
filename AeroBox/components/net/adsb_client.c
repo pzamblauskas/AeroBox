@@ -34,9 +34,6 @@
  * MARŠRUTAI (iš kur – į kur, oro uostų koordinatės, miestas, aviakompanija): adsbdb.com, ne dažniau kaip kas 3 s,
  * sekamas skrydis – pirmas. ORAI: Open-Meteo kas 15 min. Šie serveriai į adsb ribas neįskaičiuojami.
  *
- * NAMŲ VIETA pirmą kartą (g_settings.loc_src == LOC_NONE): pagal viešą IP adresą – AeroBox serveris (/v1/geo),
- * ipinfo.io arba ipwho.is (miesto tikslumu; puslapyje prašoma patikrinti). Naudotojo įvesta vieta niekada nekeičiama.
- *
  * ATNAUJINIMAI: jei naudojamas AeroBox serveris, naujos versijos tikrinamos praėjus UPD_FIRST_MS po įjungimo ir
  * kas UPD_CHECK_MS; diegiama tik paspaudus „Update“ (update_install). */
 #include "net.h"
@@ -108,7 +105,6 @@ static const char *TAG = "adsb";
 #define OS_BAD_WAIT    300000          /* paskyra atmesta – kitas bandymas po 5 min */
 #define OS_FRESH_MS    15000           /* jei pagrindinis šaltinis lėktuvą matė per tiek laiko, OpenSky jo nekeičia */
 #define OS_TOKEN_MAX   3072
-#define GEO_RETRY_MS   120000          /* vietos rasti nepavyko – kitas bandymas po tiek */
 #define SERVER_GAP     10000           /* AeroBox serveris: užklausa kas 10 s… */
 #define SERVER_JITTER  3000            /* …±1,5 s, kad tūkstančiai ekranų neklaustų tą pačią sekundę */
 #define SERVER_FAILS   3               /* tiek nesėkmių iš eilės – serveris laikomas neveikiančiu… */
@@ -812,55 +808,6 @@ static void server_register(http_buf_t *b)
     cJSON_Delete(root);
 }
 
-/* ---------- Namų vieta pagal IP ---------- */
-
-static uint32_t s_geo_next;
-
-/* mode: 0 – AeroBox serveris (/v1/geo), 1 – ipinfo.io, 2 – ipwho.is */
-static bool geo_try(http_buf_t *b, int mode, float *lat, float *lon)
-{
-    char url[SETTINGS_SRV_LEN + 12];
-    if (mode == 0) {
-        if (!g_settings.server_url[0] || g_status.srv_down) return false;
-        snprintf(url, sizeof url, "%s/v1/geo", g_settings.server_url);
-    } else {
-        strlcpy(url, mode == 1 ? "https://ipinfo.io/json" : "https://ipwho.is/", sizeof url);
-    }
-    if (http_request(url, b) != 200) return false;
-    cJSON *root = cJSON_Parse(b->buf);
-    bool ok = false;
-    if (mode == 0) {
-        *lat = (float)jnum(root, "lat", 1000);
-        *lon = (float)jnum(root, "lon", 1000);
-        ok = true;
-    } else if (mode == 1) {
-        const char *loc = jstr(root, "loc");             /* "54.9016,23.9091" */
-        ok = loc && sscanf(loc, "%f,%f", lat, lon) == 2;
-    } else {
-        *lat = (float)jnum(root, "latitude", 1000);
-        *lon = (float)jnum(root, "longitude", 1000);
-        ok = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(root, "success"));
-    }
-    cJSON_Delete(root);
-    return ok && fabsf(*lat) <= 90.0f && fabsf(*lon) <= 180.0f && (*lat != 0.0f || *lon != 0.0f);
-}
-
-static void geo_locate(http_buf_t *b)
-{
-    s_geo_next = sky_now_ms() + GEO_RETRY_MS;
-    float lat, lon;
-    if (!geo_try(b, 0, &lat, &lon) && !geo_try(b, 1, &lat, &lon) && !geo_try(b, 2, &lat, &lon)) {
-        ESP_LOGW(TAG, "vietos pagal IP rasti nepavyko");
-        return;
-    }
-    if (g_settings.loc_src != LOC_NONE) return;          /* kol laukėme atsakymo, naudotojas vietą įvedė pats */
-    settings_save_location(lat, lon, g_settings.range_km);
-    settings_mark_loc_auto();
-    aircraft_table_set_home(lat, lon, g_settings.range_km);
-    net_refresh_weather();
-    ESP_LOGI(TAG, "vieta pagal IP: %.4f, %.4f", (double)lat, (double)lon);
-}
-
 /* ---------- Programos atnaujinimai iš AeroBox serverio ---------- */
 
 static uint32_t s_upd_next = UPD_FIRST_MS;
@@ -1018,10 +965,6 @@ static bool side_request(http_buf_t *b)
     }
     if (srv_on() && g_status.upd_state != 1 && (int32_t)(now - s_upd_next) >= 0) {
         update_check(b);
-        return true;
-    }
-    if (g_settings.loc_src == LOC_NONE && (int32_t)(now - s_geo_next) >= 0) {
-        geo_locate(b);
         return true;
     }
     if (os_enabled() && (int32_t)(now - s_os_next) >= 0) {

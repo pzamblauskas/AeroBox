@@ -6,9 +6,6 @@ managed_components/
 sdkconfig.old
 **/components/net/www/index.html.gz
 
-# Sukompiliuoti ekrano programos failai (įkėlimo aplanke)
-Uploadinimas/bin/
-
 # Python
 __pycache__/
 .venv/

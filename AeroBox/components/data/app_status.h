@@ -10,9 +10,9 @@
 #endif
 #endif
 #ifdef CONFIG_SKY_FLIGHTWALL
-#define SKY_FW_VERSION "1.2.4-fw"           /* FlightWall stiliaus variantas; serveris pagal „-fw“ siūlo tik šio varianto versijas */
+#define SKY_FW_VERSION "1.2.5-fw"           /* FlightWall stiliaus variantas; serveris pagal „-fw“ siūlo tik šio varianto versijas */
 #else
-#define SKY_FW_VERSION "1.2.4"
+#define SKY_FW_VERSION "1.2.5"
 #endif
 
 /* Nustatymų tinklas (portal.c): vardas, WPA2 slaptažodis ir adresas – visiems ekranams vienodi; rodomi ekrane.

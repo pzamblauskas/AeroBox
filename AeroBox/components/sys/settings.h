@@ -35,7 +35,8 @@
 #define DATA_BUILTIN 0
 #define DATA_OWN_KEY 1
 
-/* Iš kur gauta namų vieta (loc_src) */
+/* Iš kur gauta namų vieta (loc_src). Kol ji ne LOC_USER, ekrane rodoma „CHOOSE YOUR LOCATION“ ir puslapio adresas.
+ * LOC_AUTO – vieta, kurią senesnė programa nustatė pagal IP; dabar laikoma nepasirinkta. */
 #define LOC_NONE 0
 #define LOC_AUTO 1
 #define LOC_USER 2
@@ -86,8 +87,7 @@ typedef struct {
     char    tiles[SETTINGS_TILES_LEN]; /* naudotojo išdėstymas, pvz. „1,0,1;1,1,0;0,1,0;0,0,1“ */
     char    tz[48];        /* POSIX laiko juosta */
     uint8_t tz_auto;       /* 1 – laiko juosta pagal valdymo puslapį atidariusio įrenginio laikrodį */
-    uint8_t loc_src;       /* namų vietos šaltinis: LOC_NONE (numatyta), LOC_AUTO (pagal IP), LOC_USER */
-    uint8_t welcome;       /* 1 – Wi-Fi ką tik nustatytas: rodomas žemėlapis su adresu, kol atidaromas puslapis */
+    uint8_t loc_src;       /* namų vietos šaltinis: LOC_NONE (nepasirinkta), LOC_AUTO (senesnės programos), LOC_USER */
     char    wifi_ssid[33]; /* tuščias – Wi-Fi dar nenustatytas */
     char    wifi_pass[65];
 } settings_t;
@@ -102,13 +102,7 @@ void      settings_save(void);
 void      settings_save_wifi(const char *ssid, const char *pass);
 /* Išsaugo serverio adresą ir ekrano raktą (tuščias raktas – ekranas užsiregistruos iš naujo) */
 void      settings_save_server(const char *url, const char *key);
-/* Pažymi, kad vieta rasta automatiškai (kviesti po settings_save_location); puslapis paprašys ją patikrinti */
-void      settings_mark_loc_auto(void);
-/* Po Wi-Fi nustatymo rodomo žemėlapio su adresu nebereikia (atidarytas puslapis arba paspaustas mygtukas) */
-void      settings_welcome_done(void);
-/* Iš nustatymų puslapio: Wi-Fi, namų vieta ir spindulys */
-void      settings_save_network(const char *ssid, const char *pass, float lat, float lon, float range_km);
-/* Iš valdymo puslapio: tik namų vieta ir spindulys */
+/* Iš valdymo puslapio: namų vieta ir spindulys (vieta tampa naudotojo pasirinkta – LOC_USER) */
 void      settings_save_location(float lat, float lon, float range_km);
 /* Ištrina Wi-Fi nustatymus; po perkrovimo vėl įjungiamas nustatymų tinklas */
 void      settings_clear_wifi(void);

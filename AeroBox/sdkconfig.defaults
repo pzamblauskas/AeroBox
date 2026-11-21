@@ -33,6 +33,8 @@ CONFIG_ESP_BROWNOUT_DET_LVL_SEL_7=y
 
 # Valdymo puslapio serveris: ilgesnės antraštės (jas siunčia telefonų naršyklės)
 CONFIG_HTTPD_MAX_REQ_HDR_LEN=1024
+# Soketai: puslapio serveris (iki 7 telefono ryšių + 2 vidiniai), DNS, lėktuvų ir orų užklausos – su atsarga
+CONFIG_LWIP_MAX_SOCKETS=16
 
 # TLS (https://api.adsb.lol)
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y

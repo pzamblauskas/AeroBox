@@ -263,7 +263,6 @@ esp_err_t settings_init(void)
         size_t ll = sizeof(float);
         const bool has_loc = nvs_get_blob(h, "lat", NULL, &ll) == ESP_OK;
         if (nvs_get_u8(h, "locsrc", &g_settings.loc_src) != ESP_OK) g_settings.loc_src = has_loc ? LOC_USER : LOC_NONE;
-        nvs_get_u8(h, "welcome", &g_settings.welcome);
         get_float(h, "lat", &g_settings.home_lat);
         get_float(h, "lon", &g_settings.home_lon);
         get_float(h, "range", &g_settings.range_km);
@@ -383,8 +382,6 @@ void settings_save_wifi(const char *ssid, const char *pass)
     if (nvs_open(NVS_NS, NVS_READWRITE, &h) != ESP_OK) return;
     nvs_set_str(h, "ssid", ssid);
     nvs_set_str(h, "pass", pass);
-    g_settings.welcome = 1;                        /* ekrane bus rodomas žemėlapis ir valdymo puslapio adresas */
-    nvs_set_u8(h, "welcome", 1);
     nvs_commit(h);
     nvs_close(h);
     ESP_LOGI(TAG, "issaugotas wifi '%s'", ssid);
@@ -402,12 +399,6 @@ void settings_save_server(const char *url, const char *key)
     nvs_close(h);
 }
 
-void settings_save_network(const char *ssid, const char *pass, float lat, float lon, float range_km)
-{
-    settings_save_wifi(ssid, pass);
-    settings_save_location(lat, lon, range_km);
-}
-
 void settings_save_location(float lat, float lon, float range_km)
 {
     g_settings.home_lat = lat;
@@ -423,28 +414,6 @@ void settings_save_location(float lat, float lon, float range_km)
     nvs_commit(h);
     nvs_close(h);
     ESP_LOGI(TAG, "nauja vieta: %.5f, %.5f, %.0f km", (double)lat, (double)lon, (double)range_km);
-}
-
-static void save_u8(const char *key, uint8_t v)
-{
-    nvs_handle_t h;
-    if (nvs_open(NVS_NS, NVS_READWRITE, &h) != ESP_OK) return;
-    nvs_set_u8(h, key, v);
-    nvs_commit(h);
-    nvs_close(h);
-}
-
-void settings_mark_loc_auto(void)
-{
-    g_settings.loc_src = LOC_AUTO;
-    save_u8("locsrc", LOC_AUTO);
-}
-
-void settings_welcome_done(void)
-{
-    if (!g_settings.welcome) return;
-    g_settings.welcome = 0;
-    save_u8("welcome", 0);
 }
 
 void settings_clear_wifi(void)

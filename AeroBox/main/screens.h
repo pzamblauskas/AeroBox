@@ -13,5 +13,5 @@ void screen_overlay_alert(gfx_t *g, const char *text);
 void screen_boot(gfx_t *g, float p, bool safe_mode);
 /* Wi-Fi nustatymų ekranas (būsena imama iš g_status) */
 void screen_portal(gfx_t *g, uint32_t ms);
-/* Ką tik nustatytas Wi-Fi: pasaulio žemėlapis; jei ip != NULL, viršuje juosta su adresu */
-void screen_welcome(gfx_t *g, const char *ip);
+/* Vieta dar nepasirinkta: virš patamsinto vaizdo juosta „CHOOSE YOUR LOCATION“ ir valdymo puslapio adresas */
+void screen_choose_location(gfx_t *g, const char *ip);

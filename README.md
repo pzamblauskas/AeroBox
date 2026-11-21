@@ -14,6 +14,13 @@ Ekrano programa parašyta C kalba (ESP-IDF 5.5) ir kompiliuojama per PlatformIO;
 
 Prasidėjo viskas vibecodinimu, nes negalvojau, kad kažkas pavyks, o dabar jau priėjom prie to, kad per mažai žinių turiu, jog ištobulinti iki galutinio, parduodamo varianto ^^
 
+## Pakeitimai
+
+**1.2.5 (2026-11-21)** – patikimesnis Wi-Fi nustatymas bet kokiam tinklui ir slaptažodžiui (lietuviškos raidės,
+simboliai, 12–13 kanalai, „hotspot“ – mygtukas **Save without testing**); namų vieta nebenustatoma pagal IP –
+kol ji nepasirinkta, ekrane rodoma **CHOOSE YOUR LOCATION** ir puslapio adresas. Išsamiau ir kaip įkelti –
+[Uploadinimas/README.md](Uploadinimas/README.md). Paruošti failai – [Uploadinimas/bin](Uploadinimas/bin).
+
 ## Kompiliavimas
 
 Ekrano programai reikia [uv](https://docs.astral.sh/uv/). Kelyje neturi būti tarpų (ESP-IDF jų nepriima),

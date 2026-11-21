@@ -221,6 +221,8 @@ details{margin-top:14px}.sp{color:#ff4fd0;font-weight:600}summary{cursor:pointer
 <label class="chk"><input type="checkbox" onchange="$('pass').type=this.checked?'text':'password'">Show password</label>
 <button onclick="joinWifi()" id="b_join">Connect</button>
 <div class="msg" id="m_wifi" role="status"></div>
+<div id="w_force" style="display:none"><small>Network not available right now – for example, the hotspot of this same phone? Save it anyway: AeroBox restarts and connects as soon as the network appears. Then turn the hotspot on; the address will be on the display.</small>
+<button class="s" onclick="joinWifi(1)">Save without testing</button></div>
 </div>
 <button class="d" onclick="forgetWifi()">Forget this Wi-Fi network</button>
 </section>
@@ -304,7 +306,7 @@ details{margin-top:14px}.sp{color:#ff4fd0;font-weight:600}summary{cursor:pointer
 </div>
 <script>
 const $=i=>document.getElementById(i);
-let S={},first=true,map,mk,cir,wPoll=null;
+let S={},first=true,map,mk,cir,wPoll=null,selNet=null,wT0=0;
 function tab(t){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t==t));
 document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==t));if(t=='loc'&&map)setTimeout(()=>map.invalidateSize(),50);return false}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.t));
@@ -469,7 +471,7 @@ function render(s){
  $('w_cur').innerHTML=s.wifi?'Connected to <b>'+esc(s.ssid)+'</b>, IP '+esc(s.ip)+' · <a style="color:var(--acc)" href="http://aerobox.local">aerobox.local</a>':
   s.has_wifi?'Trying to connect to <b>'+esc(s.ssid)+'</b>…':'Wi-Fi is not set up yet.';
  $('key_saved').textContent=s.hk?'saved key …'+s.k4:'';
- msg('loc_auto',s.lsrc==1?'Found automatically from your internet connection. Check that the marker is on your home – if not, enter your coordinates.':'','warn');
+ msg('loc_auto',s.lsrc!=2?'Choose your home location. Until you save it, the display shows the address of this page.':'','warn');
  if(document.activeElement!=$('srv'))$('srv').value=s.srv||'';$('srv_st').textContent=s.srv?(s.srvd?'not answering, using direct sources':s.srvk?'connected':'registering…'):'';
  if(document.activeElement!=$('osid'))$('osid').value=s.osid||'';$('os_saved').textContent=s.oss?'secret saved':'';
  {const t=!s.osid||s.dm?'':s.osst==200?['Extra flights are on.','ok']:s.osst==401?['OpenSky did not accept this client ID or secret.','bad']:s.osst==429?['OpenSky daily limit reached – extra flights pause until it resets.','bad']:s.osst?['OpenSky is not answering right now.','bad']:['Connecting to OpenSky…',''];msg('osst',t?t[0]:'',t?t[1]:'')}
@@ -524,17 +526,23 @@ function scan(){$('b_scan').disabled=true;$('nets').innerHTML='<small>Searching 
   if(!a.length){l.innerHTML='<small>No networks found – type the name instead.</small>';return}
   a.forEach(n=>{const d=document.createElement('div');d.className='net';d.tabIndex=0;d.setAttribute('role','button');d.innerHTML='<span></span><small></small>';
    d.firstChild.textContent=n.s;d.lastChild.textContent=(n.r>-60?'strong':n.r>-75?'fair':'weak')+(n.l?' · 🔒':'');
-   d.onclick=()=>{document.querySelectorAll('.net').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');$('ssid').value=n.s;$('pass').focus()};
+   d.onclick=()=>{document.querySelectorAll('.net').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');$('ssid').value=n.s;selNet=n.s;$('pass').focus()};
    d.onkeydown=e=>{if(e.key=='Enter'||e.key==' '){e.preventDefault();d.onclick()}};l.appendChild(d)})})
  .catch(()=>{$('b_scan').disabled=false;$('nets').innerHTML='<small class="bad">Search failed.</small>'})}
-function joinWifi(){const ssid=$('ssid').value.trim();if(!ssid)return msg('m_wifi','Enter the network name.','bad');
+function joinWifi(force){const raw=$('ssid').value,ssid=raw===selNet?raw:raw.trim();   /* iš sąrašo – tiksliai, su tarpais */
+ if(!ssid)return msg('m_wifi','Enter the network name.','bad');
+ $('w_force').style.display='none';
+ if(force){post('/api/wifi',{ssid:ssid,pass:$('pass').value,force:1}).then(j=>msg('m_wifi',j.ok?'Saved. AeroBox is restarting and will connect to <b>'+esc(ssid)+'</b> as soon as it is available. Turn the network on now.':esc(j.err),j.ok?'ok':'bad'))
+  .catch(()=>msg('m_wifi','Could not reach AeroBox. Check that this phone is connected to the AeroBox network and try again.','bad'));return}
  $('b_join').disabled=true;msg('m_wifi','Connecting to '+esc(ssid)+'… This takes up to 30 s. '+(S.portal?'The connection to AeroBox may drop for a moment.':
   'This page may stop responding for a moment. If it works, AeroBox moves to the new network (open aerobox.local there); if not, it returns to the current network.'),'warn');
- post('/api/wifi',{ssid:ssid,pass:$('pass').value}).then(j=>{if(!j.ok){$('b_join').disabled=false;msg('m_wifi',esc(j.err),'bad')}}).catch(()=>{});
- S.wst=1;clearInterval(wPoll);wPoll=setInterval(load,1500)}
+ post('/api/wifi',{ssid:ssid,pass:$('pass').value}).then(j=>{if(!j.ok){clearInterval(wPoll);wPoll=null;$('b_join').disabled=false;msg('m_wifi',esc(j.err),'bad')}}).catch(()=>{});
+ S.wst=1;wT0=Date.now();clearInterval(wPoll);wPoll=setInterval(load,1500)}
 function wifiState(s){if(!wPoll)return;
+ if(!s.wst&&Date.now()-wT0>12000){clearInterval(wPoll);wPoll=null;$('b_join').disabled=false;   /* bandymas taip ir neprasidėjo */
+  return msg('m_wifi','No answer from AeroBox. If the display shows CONNECTED, it worked – open the address shown there. Otherwise try again.','bad')}
  if(s.wst==2){clearInterval(wPoll);wPoll=null;msg('m_wifi','<b>Connected!</b> Go back to your Wi-Fi and open <b>http://aerobox.local</b>'+(s.ip?' or <b>http://'+esc(s.ip)+'</b>':'')+'.','ok')}
- else if(s.wst==3){clearInterval(wPoll);wPoll=null;$('b_join').disabled=false;msg('m_wifi',esc(s.wmsg),'bad')}}
+ else if(s.wst==3){clearInterval(wPoll);wPoll=null;$('b_join').disabled=false;msg('m_wifi',esc(s.wmsg),'bad');$('w_force').style.display=''}}
 function forgetWifi(){if(!confirm('Forget Wi-Fi? AeroBox will restart and open its own network for setup.'))return;
  post('/api/wifi-reset').then(()=>msg('m_wifi','Connect your phone to the AeroBox network. The password is shown on the display.','ok')).catch(()=>{})}
 

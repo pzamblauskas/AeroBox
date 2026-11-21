@@ -74,11 +74,24 @@ static void url_decode(char *s)
     *o = 0;
 }
 
+/* Formos laukas: 1 – rastas ir telpa į out, 0 – nėra, −1 – per ilgas. Naršyklė reikšmę siunčia užkoduotą
+ * (lietuviška raidė „ų“ – „%C5%B3“, „@“ – „%40“), todėl pirmiausia ji skaitoma į didesnį buferį ir tik
+ * iškodavus lyginama su out dydžiu */
+static int form_get(const char *body, const char *key, char *out, size_t n)
+{
+    char enc[400];
+    const esp_err_t e = httpd_query_key_value(body, key, enc, sizeof enc);
+    if (e == ESP_ERR_NOT_FOUND) return 0;
+    if (e != ESP_OK) return -1;
+    url_decode(enc);
+    if (strlen(enc) >= n) return -1;
+    strcpy(out, enc);
+    return 1;
+}
+
 static bool form_str(const char *body, const char *key, char *out, size_t n)
 {
-    if (httpd_query_key_value(body, key, out, n) != ESP_OK) return false;
-    url_decode(out);
-    return true;
+    return form_get(body, key, out, n) == 1;
 }
 
 static bool form_float(const char *body, const char *key, float *out)
@@ -170,20 +183,27 @@ static bool is_own_name(const char *v)
     return !*v || strcasecmp(v, ".local") == 0;
 }
 
-/* POST priimamas tik iš paties valdymo puslapio. Jis prideda „X-AeroBox: 1“ (kitos svetainės naršyklė be leidimo
- * (CORS) tokios antraštės nusiųsti negali), o Host turi būti įrenginio vardas arba IP (ne svetimas vardas,
- * nukreiptas į įrenginį) */
-static bool post_allowed(httpd_req_t *req)
+/* Ar užklausa atėjo įrenginio vardu arba IP adresu (ne svetimu vardu, kurį į įrenginį nukreipė, pvz., nustatymų
+ * tinklo DNS) */
+static bool host_is_own(httpd_req_t *req)
 {
     char v[64];
-    if (httpd_req_get_hdr_value_str(req, "X-AeroBox", v, sizeof v) != ESP_OK || strcmp(v, "1") != 0)
-        return false;
     if (httpd_req_get_hdr_value_str(req, "Host", v, sizeof v) != ESP_OK) return false;
     char *end = v[0] == '[' ? strchr(v, ']') : strchr(v, ':');      /* be prievado; [IPv6] – paliekama kaip yra */
     if (end && v[0] != '[') *end = 0;
     const size_t n = strlen(v);
     if (n && v[n - 1] == '.') v[n - 1] = 0;                           /* "aerobox.local." */
     return v[0] == '[' || is_ipv4(v) || is_own_name(v);
+}
+
+/* POST priimamas tik iš paties valdymo puslapio. Jis prideda „X-AeroBox: 1“ (kitos svetainės naršyklė be leidimo
+ * (CORS) tokios antraštės nusiųsti negali), o Host turi būti įrenginio vardas arba IP */
+static bool post_allowed(httpd_req_t *req)
+{
+    char v[8];
+    if (httpd_req_get_hdr_value_str(req, "X-AeroBox", v, sizeof v) != ESP_OK || strcmp(v, "1") != 0)
+        return false;
+    return host_is_own(req);
 }
 
 static esp_err_t forbidden(httpd_req_t *req)
@@ -245,15 +265,20 @@ static void restart_later(void)
 
 static esp_err_t page_get(httpd_req_t *req)
 {
+    /* Nustatymų tinkle DNS į įrenginį nukreipia bet kokį vardą. Jei puslapis būtų atidarytas svetimu vardu
+     * (telefono interneto patikra į „/“ arba bet kuri naršyklėje įvesta svetainė), post_allowed atmestų jo
+     * užklausas ir Wi-Fi išsaugoti nepavyktų – todėl pirmiausia nukreipiama į http://192.168.4.1/ */
+    if (g_status.portal && !host_is_own(req)) {
+        httpd_resp_set_status(req, "302 Found");
+        httpd_resp_set_hdr(req, "Location", PORTAL_URL);
+        return httpd_resp_send(req, NULL, 0);
+    }
     httpd_resp_set_type(req, "text/html; charset=utf-8");
     httpd_resp_set_hdr(req, "Cache-Control", "no-store");
     httpd_resp_set_hdr(req, "Content-Security-Policy", PAGE_CSP);
     httpd_resp_set_hdr(req, "X-Frame-Options", "DENY");
     httpd_resp_set_hdr(req, "X-Content-Type-Options", "nosniff");
     httpd_resp_set_hdr(req, "Referrer-Policy", "strict-origin-when-cross-origin");
-    /* Po Wi-Fi nustatymo adresas ekrane rodomas, kol puslapis atidaromas per namų Wi-Fi.
-     * Kol veikia nustatymų tinklas, užklausa gali ateiti iš telefono nustatymų lango – ji neskaičiuojama. */
-    if (!g_status.portal) settings_welcome_done();
     /* Suspaustas puslapis (~17 KB vietoj ~51 KB), jei naršyklė priima gzip (visos šiuolaikinės priima) */
     char enc[64] = "";
     if (httpd_req_get_hdr_value_str(req, "Accept-Encoding", enc, sizeof enc) != ESP_ERR_NOT_FOUND &&
@@ -339,7 +364,7 @@ static esp_err_t status_get(httpd_req_t *req)
     uint32_t now = sky_now_ms();
     int age = g_status.last_ok_ms ? (int)((now - g_status.last_ok_ms) / 1000) : -1;
     const home_t *h = aircraft_table_home();
-    char ssid[72], tiles[64], tz[64], reset[40], apn[32], wmsg[400], label[48], k4[16], osid[2 * SETTINGS_OS_LEN], srvj[2 * SETTINGS_SRV_LEN],
+    char ssid[8 * 33], tiles[64], tz[64], reset[40], apn[32], wmsg[400], label[48], k4[16], osid[2 * SETTINGS_OS_LEN], srvj[2 * SETTINGS_SRV_LEN],
          updj[2 * sizeof g_status.upd_ver], updn[2 * sizeof g_status.upd_notes], upde[96];
     json_str(updj, sizeof updj, g_status.upd_ver);
     json_str(updn, sizeof updn, g_status.upd_notes);
@@ -461,7 +486,7 @@ static esp_err_t scan_get(httpd_req_t *req)
         for (int j = 0; j < i; j++)
             if (strcmp(ssid, (const char *)recs[j].ssid) == 0) dup = true;
         if (dup) continue;
-        char esc[80];
+        char esc[8 * 33];
         json_str(esc, sizeof esc, ssid);
         int w = snprintf(json + o, sizeof json - o, "%s{\"s\":%s,\"r\":%d,\"l\":%d}", count ? "," : "", esc,
                          recs[i].rssi, recs[i].authmode != WIFI_AUTH_OPEN);
@@ -522,7 +547,6 @@ static esp_err_t settings_post(httpd_req_t *req)
     if (!post_allowed(req)) return forbidden(req);
     char body[1024];
     if (recv_body(req, body, sizeof body) != ESP_OK) return ESP_FAIL;
-    settings_welcome_done();                     /* naudotojas jau keičia nustatymus – žemėlapio su adresu nebereikia */
 
     /* Vieta: abi koordinatės kartu */
     float lat, lon, range = g_settings.range_km;
@@ -720,15 +744,36 @@ static esp_err_t settings_post(httpd_req_t *req)
     return send_json(req, "{\"ok\":1}");
 }
 
+/* Bet koks tinklo vardas (iki 32 baitų, ir su tarpais, lietuviškomis raidėmis, simboliais) ir slaptažodis
+ * (8–63 simboliai arba 64 šešioliktainiai skaitmenys; be slaptažodžio – atviras tinklas).
+ * Įprastai tinklas pirmiausia išbandomas. force=1 – išsaugoma nebandžius ir perkraunama: kai tinklo dabar nėra,
+ * pvz., to paties telefono „hotspot“, kurio negalima įjungti, kol telefonas prijungtas prie AeroBox */
+static bool is_hex64(const char *p)
+{
+    for (int i = 0; i < 64; i++)
+        if (!isxdigit((unsigned char)p[i])) return false;
+    return p[64] == 0;
+}
+
 static esp_err_t wifi_post(httpd_req_t *req)
 {
     if (!post_allowed(req)) return forbidden(req);
-    char body[320], ssid[33] = "", pass[65] = "";
+    char body[1024], ssid[33] = "", pass[65] = "", f[4] = "";
     if (recv_body(req, body, sizeof body) != ESP_OK) return ESP_FAIL;
-    form_str(body, "ssid", ssid, sizeof ssid);
-    form_str(body, "pass", pass, sizeof pass);
+    if (form_get(body, "ssid", ssid, sizeof ssid) < 0)
+        return send_err(req, "Network name is too long (at most 32 bytes).");
+    if (form_get(body, "pass", pass, sizeof pass) < 0)
+        return send_err(req, "Password is too long (at most 63 characters).");
     if (!ssid[0]) return send_err(req, "Choose a Wi-Fi network.");
-    if (pass[0] && strlen(pass) < 8) return send_err(req, "Password too short (at least 8 characters).");
+    const size_t pl = strlen(pass);
+    if (pl && pl < 8) return send_err(req, "Password too short (at least 8 characters).");
+    if (pl == 64 && !is_hex64(pass)) return send_err(req, "Password is too long (at most 63 characters).");
+    if (form_str(body, "force", f, sizeof f) && f[0] == '1') {
+        settings_save_wifi(ssid, pass);
+        send_json(req, "{\"ok\":1}");
+        restart_later();
+        return ESP_OK;
+    }
     if (!net_portal_try_wifi(ssid, pass)) return send_err(req, "Already connecting - please wait.");
     return send_json(req, "{\"ok\":1}");
 }
