@@ -22,7 +22,7 @@
 /* Numatytasis serverio adresas (tuščias – duomenys imami tiesiai iš nemokamų šaltinių).
  * Parduodamiems ekranams nustatomas kompiliuojant: -D SKY_SERVER_URL=\"https://…\" */
 #ifndef SKY_SERVER_URL
-#define SKY_SERVER_URL ""
+#define SKY_SERVER_URL "https://aerobox.onrender.com"   /* bandomasis serveris (Render) */
 #endif
 
 /* Kuriuos langus rodyti sekant skrydį (track_show bitai) */
